@@ -447,10 +447,9 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
     attributes(bd@params)[['mcsave']]=mcsave 
     }
 
-  if (its<=1) 
-    if (length(index)==1) 
-      bd@diags=getDiags()
-    else{
+  if ("FLQuant"%in%class(index)) index=FLQuants("1"=index)
+
+  if (its<=1){
       i=0
       bd@diags=ldply(index,function(index){
         i=i+1
