@@ -48,7 +48,7 @@ setGeneric('randJack',   function(n,object,sim,...)    standardGeneric('randJack
 randJackFn<-function(n,object,sim){
   res=jackSummary(params(object),params(sim))
   
-  cov=res$cov[modelParams(model(object)),modelParams(model(object))]
+  cov=res$cov[biodyn:::modelParams(model(object)),biodyn:::modelParams(model(object))]
   object@params=propagate(object@params,n)
   object@catch =propagate(object@catch, n)
   object@catch[]=object@catch[,,,,,1]

@@ -28,7 +28,7 @@ utils::globalVariables(c('ldply','melt','variable'))
 setGeneric('setParams<-', function(object,value,...)  standardGeneric('setParams<-'))
 
 setMethod('setParams<-', signature(object='biodyn',value='data.frame'), function(object,value) {
-  nms=c(modelParams(as.character(object@model)),'b0')
+  nms=c(biodyn:::modelParams(as.character(object@model)),'b0')
   object@params=object@params[nms]
 
   object@params =setQ(object,value)
@@ -42,14 +42,14 @@ setMethod('setParams<-', signature(object='biodyn',value='FLPar'), function(obje
 
 setMethod('setParams<-', signature(object='biodyn',value='FLQuant'), function(object,value) {
 
-  nms=c(modelParams(tolower(as.character(object@model))),'b0')
+  nms=c(biodyn:::modelParams(tolower(as.character(object@model))),'b0')
   #value=FLCore::apply(value,2,mean)
   object@params =setQ(object,value)
   
   return(object)})
 
 setMethod('setParams<-', signature(object='biodyn',value='FLQuants'), function(object,value,msy=TRUE) {
-  nms=c(modelParams(as.character(object@model)),'b0')
+  nms=c(biodyn:::modelParams(as.character(object@model)),'b0')
   object@params=object@params[nms]
     
   object@params =setQ(FLCore::iter(object,1),FLQuants(lapply(value, function(x) FLCore::apply(x,2,mean,na.rm=T))))

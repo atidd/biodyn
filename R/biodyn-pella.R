@@ -87,7 +87,7 @@ setPella=function(obj, exeNm='pella', dir=tempdir()) {
 
   bd.        =obj[[1]]
  
-  nms=c(modelParams('pellat'),'b0')
+  nms=c(biodyn:::modelParams('pellat'),'b0')
   if (length(unique(idx$name))>0)
     nmIdx=paste(c('q','sigma'), rep(unique(idx$name),each=2),sep='')
   else  
@@ -447,7 +447,18 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
     attributes(bd@params)[['mcsave']]=mcsave 
     }
 
-  if (its<=1) bd@diags=getDiags()
+  if (its<=1) 
+    if (length(indices)==1) 
+      bd@diags=getDiags()
+    else{
+      bd@diags=ldply(indices,function(index){
+        res=model.frame(mcf(FLQuants(
+              index   =indices[[i]],
+              stock   =stock(bd),
+              hat     =indices[[i]]/params(bd)[paste("q",i,sep="")],
+              stockHat=(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2,
+              residual=indices[[i]]/(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2)),drop=T)
+        diagsFn(res)})}
   
   setwd(oldwd)
                                   
@@ -536,7 +547,7 @@ calcElasticity=function(bd,mn=3,rg=5){
       
     return(log(smy))}
   
-  parNms=c(modelParams(model(bd)),'b0')
+  parNms=c(biodyn:::modelParams(model(bd)),'b0')
 
   jbn=jacobian(elasFn,log(c(bd@params[parNms])),dmns=parNms,bd=bd,mn=mn,rg=rg)
   
