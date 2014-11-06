@@ -16,7 +16,6 @@ Imports:
     reshape,
     stringr
 Suggests:
-    kobe,
     knitr
 Maintainer: Laurence Kell <laurie.kell@iccat.int>
 License: GPL-2
