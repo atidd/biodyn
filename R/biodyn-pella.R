@@ -451,7 +451,9 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
     if (length(index)==1) 
       bd@diags=getDiags()
     else{
+      i=0
       bd@diags=ldply(index,function(index){
+        i=i+1
         res=model.frame(mcf(FLQuants(
               index   =index,
               stock   =stock(bd),
