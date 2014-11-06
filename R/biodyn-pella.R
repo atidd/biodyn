@@ -448,16 +448,16 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
     }
 
   if (its<=1) 
-    if (length(indices)==1) 
+    if (length(index)==1) 
       bd@diags=getDiags()
     else{
-      bd@diags=ldply(indices,function(index){
+      bd@diags=ldply(index,function(index){
         res=model.frame(mcf(FLQuants(
-              index   =indices[[i]],
+              index   =index[[i]],
               stock   =stock(bd),
-              hat     =indices[[i]]/params(bd)[paste("q",i,sep="")],
+              hat     =index[[i]]/params(bd)[paste("q",i,sep="")],
               stockHat=(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2,
-              residual=indices[[i]]/(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2)),drop=T)
+              residual=index[[i]]/(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2)),drop=T)
         diagsFn(res)})}
   
   setwd(oldwd)
