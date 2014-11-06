@@ -17,7 +17,7 @@
 #' }
 setGeneric('biodyn',   function(object,y,...)  standardGeneric('biodyn'))
 setMethod('biodyn', signature(),
-    function(model="pellat",min=.1,max=10,msy=NULL,r=NULL,...){
+    function(model="pellat",min=.1,max=10,...){
             
       model=tolower(model)
             
@@ -50,7 +50,12 @@ setMethod('biodyn', signature(),
       # Load given slots
       for(i in names(args))
         slot(res, i) = args[[i]]
-                          
+      
+      range(res)=unlist(dims(catch(res))[c("minyear","maxyear")])
+
+      if (!("stock"%in%names(args)))
+        res@stock=FLQuant(NA,dimnames=list(year= range(res)["minyear"]:(range(res)["maxyear"]+1)))
+      
       return(res)})
 
 setMethod('biodyn', signature(object="FLBRP",y="FLStock"),
@@ -163,14 +168,16 @@ setMethod('biodyn.', signature(model='character',params='missing'),
             biodyn(model=factor(model,levels=models),min=min,max=max,catch=catch,stock=stock,...))
 
 setMethod('biodyn.', signature(model='missing',params='missing'),
-          function(model,params,min=0.1,max=10.0,catch=catch,stock=stock,msy=NULL,...) {
+          function(model,params,min=0.1,max=10.0,msy=NULL,...) {
             args = list(...)
-            
+         
             res=new('biodyn')
             
             # Load given slots
             for(i in names(args))
               slot(res, i) = args[[i]]
+            
+            range(res)=unlist(dims(catch(res))[c("minyear","maxyear")])
             
             return(res)})
 
