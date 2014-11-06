@@ -24,7 +24,7 @@ library(knitr)
 options(max.print="75")
 opts_chunk$set(fig.path="out/",
                echo =TRUE,
-               cache=TRUE,
+               cache=!TRUE,
                cache.path="cache/",
                prompt=FALSE,
                tidy=FALSE,
@@ -426,7 +426,7 @@ vcov(bdHat)
 
 The Bootstrap can be used to simulate CPUE series replicates and the model refitted.
 
-```{runcertaintyBoot, fig.height=4, fig.margin=TRUE, fig.cap="Bootstrapped CPUE series"}
+```{runcertaintyBoot, fig.height=4, fig.margin=TRUE, fig.cap="Bootstrapped CPUE series",eval=FALSE}
 cpueSim=bdHat@diags[,c("year","hat")]
 names(cpueSim)[2]="data"
 cpueSim=as.FLQuant(cpueSim)
@@ -437,7 +437,7 @@ cpueSim=rlnorm(100,log(cpueSim),cv)
 
 cpueSim[cpueSim==0]=NA
 
-plot(cpueSim)
+plot(cpueSim,na.rm=TRUE)
 
 sims[["CPUE"]]=fit(propagate(bdHat,100),cpueSim)
 ```
@@ -499,7 +499,7 @@ ggplot(data=as.data.frame(refs))+
 
 ## Marginal Density for Stock
 ```{rrefBmsy,fig.fullwidth=TRUE, fig.width=4, fig.height=6,fig.cap="Densities of Stock from different methods for estimating uncertainty."}
-load("/home/laurie/Desktop/flr/git/biodyn/stuff/data/sims.RData")
+#load("/home/laurie/Desktop/flr/git/biodyn/stuff/data/sims.RData")
 sims[["Jack Knife"]]=bdJK
 
 c("Best Fit","CPUE","Jack Knife","MCMC")

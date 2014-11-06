@@ -16,7 +16,6 @@ Imports:
     reshape,
     stringr
 Suggests:
-    diags,
     kobe,
     knitr
 Maintainer: Laurence Kell <laurie.kell@iccat.int>
