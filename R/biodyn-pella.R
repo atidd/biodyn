@@ -451,7 +451,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
 
   if (its<=1){
       i=0
-      bd@diags=dgs=ldply(cpue,function(index){
+      bd@diags=dgs=ldply(index,function(index){
         i=i+1
         stockHat=(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2
         hat     =stockHat*params(bd)[paste("q",i,sep="")]
