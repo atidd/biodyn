@@ -451,14 +451,17 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
 
   if (its<=1){
       i=0
-      bd@diags=ldply(index,function(index){
+      bd@diags=dgs=ldply(indices,function(index){
         i=i+1
+        stockHat=(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2
+        hat     =stockHat*params(bd)[paste("q",i,sep="")]
         res=model.frame(mcf(FLQuants(
-              index   =index,
-              stock   =stock(bd),
-              hat     =index/params(bd)[paste("q",i,sep="")],
-              stockHat=(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2,
-              residual=index/(stock(bd)[,-dims(stock(bd))$year]+stock(bd)[,-1])/2)),drop=T)
+          index   =index,
+          stock   =stock(bd),
+          stockHat=stockHat,
+          hat     =hat,
+          residual=log(index/hat))),drop=T)
+        
         diagsFn(res)})}
   
   setwd(oldwd)
