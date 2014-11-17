@@ -52,7 +52,7 @@ setMethod('profile', signature(fitted='biodyn'),
         for (i in seq(length(index)))
           if (dims(index[[i]])$maxyear>=dims(stock(fitted))$maxyear) stop('index years greater in length than stock')
         
-        if (dims(fitted)$iter>1) stop('can only be done for a single iter')
+        if (dims(catch(fitted))$iter>1) catch(fitted)=iter(catch(fitted),1) #stop('can only be done for a single iter')
         
         if (dim(fitted@control)[3]==1){
            fitted@control=propagate(fitted@control,length(range)^length(which))
@@ -67,9 +67,22 @@ setMethod('profile', signature(fitted='biodyn'),
 
            fitted@control[which,'phase']=-1
            }
-        else
-          fitted@control=profileGrid(fitted@control,which,range)
+        else{
           
+           fitted@catch  =iter(catch(fitted),1)
+           fitted@stock  =iter(stock(fitted),1)
+           setControl(fitted)=params(fitted)
+           
+           params(fitted)=iter(params(fitted),1)
+
+           fitted@control=profileGrid(fitted@control,which,range)
+           
+           vcov(fitted)  =propagate(iter(vcov(fitted),  1),dims(fitted@control)$iter)
+           fitted@hessian=propagate(iter(fitted@hessian,1),dims(fitted@control)$iter)
+           fitted@mng    =propagate(iter(fitted@mng,    1),dims(fitted@control)$iter)
+           fitted@mngVcov=propagate(iter(fitted@mngVcov,1),dims(fitted@control)$iter)
+           }
+        
         if (!run) return(fitted)
         
         f=fitted
@@ -87,10 +100,12 @@ setMethod('profile', signature(fitted='biodyn'),
 #                             levels=cis, add=TRUE, labcex=0.8, labels=ci))
 # 
   
+
 profileGrid=function(object,which,range=seq(0.95,1.05,length.out=11)){
     
     res=maply(range,function(x,which,ctl) {
-      ctl[which,'val']=ctl[which,'val']*x
+      ctl[which,'val']  =ctl[which,'val']*x
+      ctl[which,'phase']=-1
       ctl}, which=which, ctl=object)
     
     res=aperm(res,c(2:4,1))

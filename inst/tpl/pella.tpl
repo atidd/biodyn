@@ -359,10 +359,27 @@ FUNCTION get_fit
   B[1] = k*a;
   for(int t=1; t<=nc; t++)
     B[t+1] = sfabs(B[t] + r/p*B[t]*(1-pow(B[t]/k,p)) - C[t]);
-  
+
+// for (i=1; i<=nIdx; i++){
+//    int n=0; 
+//    q=0.0;
+//    ss=0.0;
+//    if (qPh(i)){
+//       n++;
+//       q=+log(index)-log(stock;
+//       }
+//     q[i]  =exp(q);
+//
+//    if (sPh(i)){
+//     sigma=.calcSigma(log(index),log(q*stock))}
+//     SS=+(log(index)-log(q*stock))^2
+//     }
+//     sigma=(SS/n)^.5
+
   for (int j=1; j<=ni; j++)
      //Ifit[j] = B(X[j])*q(Idx[j]);
      Ifit[j] = 0.5*(B(X[j])+B(X[j]+1))*q(Idx[j]);
+
 
   cnow =C[nc];
   fnow =C[nc]/B[nc];
