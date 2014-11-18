@@ -151,6 +151,9 @@ PARAMETER_SECTION
   number SS
   number s_
   vector nii(1,2)
+  vector tmpn(1,nIdx)
+  vector tmpq(1,nIdx)
+  vector tmps(1,nIdx)
   
   number _bratio
   number _fratio
@@ -360,27 +363,41 @@ FUNCTION get_fit
   for(int t=1; t<=nc; t++)
     B[t+1] = sfabs(B[t] + r/p*B[t]*(1-pow(B[t]/k,p)) - C[t]);
 
-// for (i=1; i<=nIdx; i++){
-//    int n=0; 
-//    q=0.0;
-//    ss=0.0;
-//    if (qPh(i)){
-//       n++;
-//       q=+log(index)-log(stock;
-//       }
-//     q[i]  =exp(q);
-//
-//    if (sPh(i)){
-//     sigma=.calcSigma(log(index),log(q*stock))}
-//     SS=+(log(index)-log(q*stock))^2
-//     }
-//     sigma=(SS/n)^.5
+  // constricted likelihood
+  bool flag=false;
+  
+  //initialise
+  for (int i=1; i<=nIdx; i++){
+    tmpn(i)=0;
+    tmpq(i)=0;
+    tmps(i)=0;
+    if ((qPh(i)< -1) || (sPh(i)< -1))
+       flag=true;
+    }
+
+  // calculate
+  if (flag){
+    for (int j=1; j<=ni; j++){
+      tmpn(Idx[j])=tmpn(Idx[j])+1;
+      tmpq(Idx[j])=tmpq(Idx[j])+log(I[Idx[j]])-log(0.5*(B(X[j])+B(X[j]+1)));
+      }
+
+    for (int i=1; i<=nIdx; i++)
+      tmpq(i)=exp(tmpq(i)/tmpn[i]);
+    
+    for (int j=1; j<=ni; j++)
+      tmps[Idx[j]]=+log(I[Idx[j]])-log(0.5*(B(X[j])+B(X[j]+1))*tmpq(Idx[j]));
+
+    for (int i=1; i<=nIdx; i++){
+      if (qPh[i]<-1) q[i]=tmpq(i);
+      if (sPh[i]<-1) s[i]=pow((tmps(i)/tmpn[i]),.5);
+      }
+    }
 
   for (int j=1; j<=ni; j++)
      //Ifit[j] = B(X[j])*q(Idx[j]);
      Ifit[j] = 0.5*(B(X[j])+B(X[j]+1))*q(Idx[j]);
-
-
+  
   cnow =C[nc];
   fnow =C[nc]/B[nc];
   bnow =B[nc];

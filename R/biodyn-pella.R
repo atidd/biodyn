@@ -50,6 +50,9 @@ setExe=function(exeNm,package,dir=tempdir()){
     file.copy(exe, dir)
     dir = paste(dir, '/', sep='')
     
+    if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
+      stop("executable priviledge not set for",exe)
+    
     # Windows
   } else if (.Platform$OS.type == 'windows') {
     exe = paste(system.file('bin', 'windows', package=package, mustWork=TRUE), paste(exeNm, '.exe', sep=''), sep='/')

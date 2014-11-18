@@ -119,6 +119,18 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     nii.initialize();
   #endif
+  tmpn.allocate(1,nIdx,"tmpn");
+  #ifndef NO_AD_INITIALIZE
+    tmpn.initialize();
+  #endif
+  tmpq.allocate(1,nIdx,"tmpq");
+  #ifndef NO_AD_INITIALIZE
+    tmpq.initialize();
+  #endif
+  tmps.allocate(1,nIdx,"tmps");
+  #ifndef NO_AD_INITIALIZE
+    tmps.initialize();
+  #endif
   _bratio.allocate("_bratio");
   #ifndef NO_AD_INITIALIZE
   _bratio.initialize();
@@ -344,6 +356,31 @@ void model_parameters::get_fit(void)
   B[1] = k*a;
   for(int t=1; t<=nc; t++)
     B[t+1] = sfabs(B[t] + r/p*B[t]*(1-pow(B[t]/k,p)) - C[t]);
+  // constricted likelihood
+  bool flag=false;
+  //initialise
+  for (int i=1; i<=nIdx; i++){
+    tmpn(i)=0;
+    tmpq(i)=0;
+    tmps(i)=0;
+    if ((qPh(i)< -1) || (sPh(i)< -1))
+       flag=true;
+    }
+  // calculate
+  if (flag){
+    for (int j=1; j<=ni; j++){
+      tmpn(Idx[j])=tmpn(Idx[j])+1;
+      tmpq(Idx[j])=tmpq(Idx[j])+log(I[Idx[j]])-log(0.5*(B(X[j])+B(X[j]+1)));
+      }
+    for (int i=1; i<=nIdx; i++)
+      tmpq(i)=exp(tmpq(i)/tmpn[i]);
+    for (int j=1; j<=ni; j++)
+      tmps[Idx[j]]=+log(I[Idx[j]])-log(0.5*(B(X[j])+B(X[j]+1))*tmpq(Idx[j]));
+    for (int i=1; i<=nIdx; i++){
+      if (qPh[i]<-1) q[i]=tmpq(i);
+      if (sPh[i]<-1) s[i]=pow((tmps(i)/tmpn[i]),.5);
+      }
+    }
   for (int j=1; j<=ni; j++)
      //Ifit[j] = B(X[j])*q(Idx[j]);
      Ifit[j] = 0.5*(B(X[j])+B(X[j]+1))*q(Idx[j]);
