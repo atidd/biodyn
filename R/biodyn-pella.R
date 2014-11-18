@@ -44,15 +44,16 @@ diagsFn=function(res){
 ## copies exe into temp dir ready to run
 setExe=function(exeNm,package,dir=tempdir()){
   ##### set up temp dir with exe for data files
+  print(1)
   # Linux
   if (R.version$os=='linux-gnu') {
     exe = paste(system.file('bin', 'linux', package=package, mustWork=TRUE),exeNm, sep='/')
+    if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
+      warning("Executable privilege not set for \n",exe,call.=FALSE)
+    
     file.copy(exe, dir)
     dir = paste(dir, '/', sep='')
-    
-    if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
-      stop("executable priviledge not set for",exe)
-    
+     
     # Windows
   } else if (.Platform$OS.type == 'windows') {
     exe = paste(system.file('bin', 'windows', package=package, mustWork=TRUE), paste(exeNm, '.exe', sep=''), sep='/')
@@ -346,7 +347,12 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
         }  
 
      object[[1]]=set(object,exeNm,dir)
-
+     
+     exe = paste(system.file('bin', 'linux', package="biodyn", mustWork=TRUE),exeNm, sep='/')
+     
+     if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
+       warning("Executable privilege not set for \n",exe,call.=FALSE)
+     
      # run
      #system(paste('./', exeNm, ' ', cmdOps, sep=''))
      system(paste(exeNm, ' ', cmdOps, sep=''))
