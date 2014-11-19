@@ -111,6 +111,9 @@ private:
   param_number SS;
   param_number s_;
   param_vector nii;
+  param_vector tmpn;
+  param_vector tmpq;
+  param_vector tmps;
   param_number _bratio;
   param_number _fratio;
   param_number xy;
