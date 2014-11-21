@@ -1,3 +1,6 @@
+guessK=function(r,catch,p=1,ratio=0.5)
+  1/ratio*mean(catch)*p/(r*(1-(ratio)^p))
+
 #' biodyn constructor
 #' 
 #' @name biodyn
@@ -17,45 +20,42 @@
 #' }
 setGeneric('biodyn',   function(object,y,...)  standardGeneric('biodyn'))
 setMethod('biodyn', signature(),
-    function(model="pellat",min=.1,max=10,...){
+    function(model="pellat",
+             r=0.5,p=1,k=guessK(r=r,catch=catch,p=p),b0=0.75,
+             min=.1,max=10,...){
             
       model=tolower(model)
             
       args = list(...)
-            
-      if (is.null(msy) & ("catch" %in% names(args))) 
-        msy=mean(catch,na.rm=TRUE)
-      
+       
       res=new("biodyn")
       
+      # Load given slots
+      for(i in names(args))
+        slot(res, i) = args[[i]]
+      
       if (!("params" %in% names(args))){
-        params=FLPar(array(as.numeric(NA),
-                     dim=c(length(biodyn:::modelParams("pellat"))+1,1),
-                     dimnames=list(params=c(biodyn:::modelParams("pellat"),"b0"),iter=1)))
-        res@params=params
-      }else{
-        res@params=args[["params"]]    
-      }
+        res@params=rbind(FLPar(r =FLPar(r),
+                               k =FLPar(k),
+                               p =FLPar(p),
+                               b0=FLPar(b0)))
+      
+        print(res@params)}
             
       res@control=propagate(res@control,dims(res@params)$iter)
       nms=dimnames(res@control)$param[dimnames(res@control)$param %in% dimnames(res@params)$param]
       res@control[nms,  'val']=res@params[nms,]
       res@control[nms,  'min']=res@params[nms,]*min
       res@control[nms,  'max']=res@params[nms,]*max
-          
-
-      if (!('b0' %in% nms))
-         res@control['b0',c('min','max','val')]=c(0.75,1,1)
-                
-      # Load given slots
-      for(i in names(args))
-        slot(res, i) = args[[i]]
-      
+      res@control[c("b0","p"),'phase']=-1
+            
       range(res)=unlist(dims(catch(res))[c("minyear","maxyear")])
 
       if (!("stock"%in%names(args)))
         res@stock=FLQuant(NA,dimnames=list(year= range(res)["minyear"]:(range(res)["maxyear"]+1)))
       
+      res=fwd(res,catch=catch)
+
       return(res)})
 
 setMethod('biodyn', signature(object="FLBRP",y="FLStock"),

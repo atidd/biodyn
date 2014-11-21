@@ -39,14 +39,15 @@ utils::globalVariables('maply')
 # v <- ggplot(res, aes(r, k, z = ll))
 # v <- ggplot(res, aes(r, k, z = ll))+ stat_contour(aes(colour = ..level..), size = 1)
 setMethod('profile', signature(fitted='biodyn'),
-      function(fitted,index,
-                   which,
-                   range=seq(0.5,1.5,length.out=21),
-                   fn   =function(x) cbind(model.frame(params(x)),
-                                           ll=model.frame(x@ll),
-                                           model.frame(refpts(x))[,-4],
-                                           stock  =c(stock(  x)[,ac(range(x)['maxyear'])]%/%bmsy(x)),
-                                           harvest=c(harvest(x)[,ac(range(x)['maxyear'])]%/%fmsy(x))),
+      function(fitted, 
+               which,
+               index="missing",
+               range=seq(0.5,1.5,length.out=21),
+               fn   =function(x) cbind(model.frame(params(x)),
+                                       ll     =model.frame(x@ll),
+                                       model.frame(refpts(x))[,-4],
+                                       stock  =c(stock(  x)[,ac(range(x)['maxyear'])]%/%bmsy(x)),
+                                       harvest=c(harvest(x)[,ac(range(x)['maxyear'])]%/%fmsy(x))),
                    run  =TRUE,...){
         if (is.FLQuant(index)) index=FLQuants(index)
         for (i in seq(length(index)))

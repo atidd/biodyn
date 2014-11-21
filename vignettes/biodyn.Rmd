@@ -468,7 +468,7 @@ Diagnostics need to be run to make sure that the results have actually estimated
 acf(c(params(sims[["MCMC"]])["r"]))
 ```
 
-```{runcertaintySave}
+```{runcertaintySave,eval=FALSE,echo=FALSE}
 save(sims,cpue,bdJK,bdHat,file="/home/laurie/Desktop/flr/git/biodyn/stuff/data/sims.RData")
 ```
 
