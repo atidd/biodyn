@@ -21,40 +21,45 @@ guessK=function(r,catch,p=1,ratio=0.5)
 setGeneric('biodyn',   function(object,y,...)  standardGeneric('biodyn'))
 setMethod('biodyn', signature(),
     function(model="pellat",
+             catch=NA,
              r=0.5,p=1,k=guessK(r=r,catch=catch,p=p),b0=0.75,
              min=.1,max=10,...){
             
       model=tolower(model)
             
       args = list(...)
-       
+
       res=new("biodyn")
       
       # Load given slots
       for(i in names(args))
         slot(res, i) = args[[i]]
-      
+     
+      if ("FLQuant"%in%is(catch))
+        res@catch=catch
+    
+
       if (!("params" %in% names(args))){
         res@params=rbind(FLPar(r =FLPar(r),
                                k =FLPar(k),
                                p =FLPar(p),
                                b0=FLPar(b0)))
       
-        print(res@params)}
-            
+       }
+           
       res@control=propagate(res@control,dims(res@params)$iter)
       nms=dimnames(res@control)$param[dimnames(res@control)$param %in% dimnames(res@params)$param]
       res@control[nms,  'val']=res@params[nms,]
       res@control[nms,  'min']=res@params[nms,]*min
       res@control[nms,  'max']=res@params[nms,]*max
       res@control[c("b0","p"),'phase']=-1
-            
+             
       range(res)=unlist(dims(catch(res))[c("minyear","maxyear")])
 
       if (!("stock"%in%names(args)))
         res@stock=FLQuant(NA,dimnames=list(year= range(res)["minyear"]:(range(res)["maxyear"]+1)))
-      
-      res=fwd(res,catch=catch)
+
+      res=fwd(res,catch=res@catch)
 
       return(res)})
 
