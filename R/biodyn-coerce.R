@@ -43,14 +43,14 @@ FLBRP2biodyn=function(from){
     (bmsy-k*(1/(1+p))^(1/p))^2, c(0.001,5), bmsy=bmsy,k=k)$minimum
   k=bmsy/((1/(1+p))^(1/p))
   r=msy/(k*(1/(1+p))^(1/p+1))
-  b0=mean(stock(popl)[,1]/k)
+  b0=mean(stock(from)[,1]/k)
   
   bd=biodyn()
   
   bd@params=FLPar(c(r=r,k=k,p=p,b0=b0))
   
   bd@catch=catch.obs(from)
-  bd@stock=stock.obs(from)
+  bd@stock=from@stock.obs
   
   bd}
 
@@ -80,4 +80,6 @@ setMethod('biodyn', signature(model='FLStock',params='missing'),
 
 setGeneric('as.biodyn',   function(x,...)     standardGeneric('as.biodyn'))
 setMethod('as.biodyn',signature(x='FLStock'),function(x){FLStock2biodyn(x)})
+
+
           

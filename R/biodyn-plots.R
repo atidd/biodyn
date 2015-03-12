@@ -64,7 +64,10 @@ setMethod('plot', signature(x='biodyn', y='missing'),
       if (dims(x)$iter>=length(probs)){  
         res=whooow(x,fn,probs)
         res=transform(res,iter=factor(iter,labels= paste(as.integer(probs*100),"%",sep="")))
-        res=cast(res,quant+year+unit+season+area+qname~iter,value="data")
+        if ("quant"%in%names(res))
+          res=cast(res,quant+year+unit+season+area+qname~iter,value="data")
+        else
+          res=cast(res,age+year+unit+season+area+qname~iter,value="data")
         
         nprob=length(probs)
         if (any(0.5 %in% probs)){
@@ -75,7 +78,7 @@ setMethod('plot', signature(x='biodyn', y='missing'),
           res=res[,c(1:6,val[!(val==grep("50%",names(res)))])]}
         
         rbn=mdply(data.frame(ymax=dim(res)[2]-seq(nprob/2)+1,
-                               ymin=6+seq(nprob/2)),
+                             ymin=6+seq(nprob/2)),
                     function(ymax,ymin){
                        data.frame(res[,c(1:6)],ymin=res[,ymin],ymax=res[,ymax],
                                   CI=paste(names(res)[ymin],names(res)[ymax],sep="-"))
@@ -112,6 +115,9 @@ setMethod('plot', signature(x='biodyns', y='missing'),
     {  
     res=ldply(x,function(x) plot(x,probs=probs,type=type,na.rm=na.rm)$data)
     mdn=ldply(x,function(x) whooow(x,fn,probs=.5))
+    
+    if (names(res)[1]=="X1") names(res)[1]=".id"
+    if (names(mdn)[1]=="X1") names(mdn)[1]=".id"
     
     if (length(unique(res$CI))>=1){
       p=ggplot(res)+

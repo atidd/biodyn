@@ -30,17 +30,9 @@ setGeneric('kobe',  function(object,method,...) standardGeneric('kobe'))
 setMethod('kobe', signature(object='biodyn',method='missing'),
           function(object,what=c('sims','trks','pts','smry','wrms')[1],probs=c(0.75,0.5,.25),
                    year=NULL,nwrms=10,sim=NULL){
-            
-            if (substr(sim,1,4)=="jack"){
-              stock  =stock(  object)%/%bmsy(object)
-              harvest=harvest(object)%/%fmsy(object)
-            }else if ((dims(ple4)$iter)==1){
-              stock  =stock(  object)%/%bmsy(object)
-              harvest=harvest(object)%/%fmsy(object)
-            }else{          
+                 
               res=model.frame(mcf(FLQuants(stock   =stock(  object)%/%bmsy(object),
-                                           stock   =stock(  object)%/%bmsy(object))))
-            }
+                                           harvest =harvest(object)%/%fmsy(object))))
             
             if ('pts' %in% what & is.null(year)) year=range(object)['maxyear']-1
             kobeFn(res,what,probs,year,nwrms)})

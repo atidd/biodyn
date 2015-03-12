@@ -56,8 +56,8 @@ setMethod( 'sim',   signature(stock='missing',brp='missing'),
   
   return(object)}) 
 
-setMethod( 'sim', signature(stock='FLStock',brp='FLBRP'),function(stock,brp) {
-  
+setMethod( 'sim', signature(stock='FLStock',brp='ANY'),function(stock,brp) {
+
   bd=biodyn::biodyn(stock)
   
   params(bd)[dimnames(ctrl)$param]=ctrl[dimnames(ctrl)$param,'val']

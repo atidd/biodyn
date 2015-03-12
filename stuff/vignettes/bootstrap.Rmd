@@ -1,0 +1,65 @@
+---
+title: ""
+output:
+  rmdformats::html_clean:
+    fig_width: 6
+    fig_height: 6
+    highlight: pygments
+---
+
+
+```{r knitr_init, echo=FALSE, results="asis", cache=FALSE}
+library(knitr)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(fig.path="out/",
+               echo=FALSE,
+	       cache=TRUE,
+               cache.path="cache/",
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+#Introduction
+
+The bootstrap is a random resampling of data points (i.e a Monte Carlo simulation) from an original set of N points. It is assumed that the propbability of a data point being chosen is $1//N$ and is independent of it having been chosen previously. A given data point $x_i$ will on average appear once, but it may appear never or twice, and so on in any Monte Carlo generated data set. The probability that $x_i$ appears $n_i$ times approximates to a Poisson distribution with a mean of 1. 
+
+However, it is not exactly Poissonian because of the constraint in Eq. (34) below. It turns out that we shall need to include the devition from Poisson distribution
+even for large N. We shall use the term ???bootstrap??? data sets to denote the Monte Carlo-generat ed data sets. More precisely, let us suppose that the number of times xi appears in a Monte Carlo-generated data set is ni. Since each bootstrap dataset contains exactly N data points, we have the constrain
+
+
+# Simulations
+
+```{r, fig.cap="Simulated CPUE series",fig.height=2}
+library(biodyn)
+library(ggplotFL)
+
+bd=sim()
+bd=window(bd,end=49)
+
+cpue=(stock(bd)[,-dims(bd)$year]+stock(bd)[,-1])/2
+cpue=rlnorm(250,log(cpue),.2)
+
+plot(cpue)
+```
+
+```{r,eval=FALSE, fig.cap="Monte Carlo simulation of CPUE series"}
+#set parameters
+setParams(bd) =cpue
+setControl(bd)=params(bd)
+control(bd)[3:4,"phase"]=-1
+
+#fit
+catch(bd)=propagate(catch(bd),250)
+bdHat=fit(bd,cpue)
+
+plot(biodyns("Hat"=bdHat,"True"=bd))
+
+median(stock(bd)[,49])
+median(stock(bdHat)[,49])
+```
+

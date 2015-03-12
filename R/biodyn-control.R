@@ -78,6 +78,8 @@ getRK<-function(msy,bmsy,k,p=c(0.0001,5)){
 
 setMethod('setParams<-', signature(object='biodyn',value='FLBRP'), function(object,value,msy=TRUE) {
   
+  #if (!(is(value)%in%'FLBRP')) return(object)
+    
   if (msy){
     params(object)[c("r","k","p")]=getRK(value@refpts["msy",   "yield"],
                                          value@refpts["msy",   "biomass"],
@@ -132,12 +134,13 @@ setMethod('setControl<-', signature(object='biodyn',value='FLPar'), function(obj
   object@control=FLPar(array(rep(c(1,NA,NA,NA),each=length(nms)), dim=c(length(nms),4,dims(value)$iter), dimnames=list(params=nms,option=c('phase','min','val','max'),iter=seq(dims(value)$iter))))
   nms.=nms[nms %in% dimnames(ctr)$params]
   
-  object@control[nms.,'phase']=ctr[nms.,"phase"]
+  nits=seq(dims(value)$iter)
+  object@control[nms.,'phase',nits]=ctr[nms.,"phase",nits]
   nms.=nms[nms %in% dimnames(object@params)$params]
 
-  object@control[,"val"]=object@params[nms.]
-  object@control[,"min"]=object@params[nms.]*min
-  object@control[,"max"]=object@params[nms.]*max
+  object@control[,"val",nits]=object@params[nms.,nits]
+  object@control[,"min",nits]=object@params[nms.,nits]*min
+  object@control[,"max",nits]=object@params[nms.,nits]*max
   
   if (!is.na(any(value[nms]<0)) & any(value[nms]<0))
     object@control[nms[value[nms]<0],c('min','max')]=object@control[nms[value[nms]<0],c('max','min')]

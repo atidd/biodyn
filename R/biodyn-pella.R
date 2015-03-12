@@ -44,7 +44,7 @@ diagsFn=function(res){
 ## copies exe into temp dir ready to run
 setExe=function(exeNm,package,dir=tempdir()){
   ##### set up temp dir with exe for data files
-  print(1)
+  
   # Linux
   if (R.version$os=='linux-gnu') {
     exe = paste(system.file('bin', 'linux', package=package, mustWork=TRUE),exeNm, sep='/')
@@ -89,7 +89,7 @@ setPella=function(obj, exeNm='pella', dir=tempdir()) {
   }
   idx=idx[!is.na(idx$index),]
 
-  bd.        =obj[[1]]
+  bd.=obj[[1]]
  
   nms=c(biodyn:::modelParams('pellat'),'b0')
   if (length(unique(idx$name))>0)
@@ -97,26 +97,34 @@ setPella=function(obj, exeNm='pella', dir=tempdir()) {
   else  
     nmIdx=c('q','sigma')
 
-  # ctl file
-  ctl        = bd.@control[nms,]
-  ctl[,2:4]  = ctl[,c(2,4,3)]
-  ctl        = alply(ctl,1)
+  ctl = bd.@control[nms,]
+  ctl[,2:4] = ctl[,c(2,4,3)]
+  ctl=alply(array(c(ctl),dim=dim(ctl),dimnames=dimnames(ctl))[,,1,drop=T],1)
+#  ctl = alply(ctl,1)
   names(ctl) = nms
+#   
+#   # ctl file
+#   ctl        =bd.@control[nms,,1]
+#   ctl[,2:4,1]=ctl[,c(2,4,3),1]
+# print("set 1")
+#   ctl        =alply(ctl,1)
+# print("set 2")
+#   names(ctl) =nms
 
   biodyn:::writeADMB(ctl, paste(dir, '/', exeNm, '.ctl', sep=''),FALSE)
 
   cat('# q ####################\n', file=paste(dir, '/', exeNm, '.ctl', sep=''),append=TRUE)
 
-  ctl           = bd.@control[nmIdx[grep('q',nmIdx)],]
-  ctl[,2:4]     = ctl[,c(2,4,3)]
+  ctl           = bd.@control[nmIdx[grep('q',nmIdx)],,1]
+  ctl[,2:4,1]   = ctl[,c(2,4,3),1]
   ctl           = alply(t(matrix(ctl,dim(ctl))),1)
   names(ctl)    = c('phase','lower','upper','guess')
 
   biodyn:::writeADMB(ctl, paste(dir, '/', exeNm, '.ctl', sep=''),TRUE)
   
   cat('# sigma ################\n', file=paste(dir, '/', exeNm, '.ctl', sep=''),append=TRUE)
-  ctl           = bd.@control[nmIdx[grep('s',nmIdx)],]
-  ctl[,2:4]     = ctl[,c(2,4,3)]
+  ctl           = bd.@control[nmIdx[grep('s',nmIdx)],,1]
+  ctl[,2:4,1]     = ctl[,c(2,4,3),1]
   ctl           = alply(t(matrix(ctl,dim(ctl))),1)
   names(ctl)    = c('phase','lower','upper','guess')
 
@@ -274,14 +282,14 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
      catch=catch(object)
      catch(object)=propagate(catch(object),dims(index)$iter)
      }
-  
+ 
   max=min(dims(catch(object))$maxyear,ifelse(is(index)[1]=='FLQuant',dims(index)$maxyear,max(laply(index,function(x) dims(x)$maxyear))))
   if (!is.na(range(object)['maxyear'])) max=min(max,range(object)['maxyear'])
   min=min(dims(catch(object))$minyear,ifelse(is(index)[1]=='FLQuant',dims(index)$minyear,max(laply(index,function(x) dims(x)$minyear))))
   if (!is.na(range(object)['minyear'])) min=max(min,range(object)['minyear'])
 
   object=window(object,start=min,end=max)
-
+ 
   if ('FLQuant' %in% is(index)){ 
     index =window(index,start=min,end=max)
   }else if ('FLQuants' %in% is(index)){
@@ -294,7 +302,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
   oldwd=getwd()
   setwd(dir)
   exe()
-
+ 
   object=list(object,index)
   bd =object[[1]]
   its=max(maply(names(slts), function(x) { 
@@ -303,11 +311,11 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
           dims(slot(bd,x))$iter 
           })) 
   its=max(its,dims(bd@control)$iter)
-  
+ 
   nms=dimnames(params(bd))$params
   bd@vcov   =FLPar(array(as.numeric(NA), dim=c(length(nms),length(nms),its), dimnames=list(params=nms,params=nms,iter=seq(its))))
   bd@hessian=bd@vcov
-  
+   
   us=paste('u',seq(length(dimnames(params(bd))$params[grep('q',dimnames(params(bd))$params)])),sep='')
   bd@ll=FLPar(NA,dimnames=list(params=us,iter=seq(1)))
 
@@ -334,25 +342,27 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
       
       #bd=propagate(bd,its)      
       }
-  
+   
   #print(slot(object[[1]],'control'))
  
   cpue=object[[2]]
   bd2 =object[[1]]
   for (i in seq(its)){       
      object[[2]] = FLCore::iter(cpue,i) 
-
+     
      for (s in names(slts)[-(7:8)]){      
         slot(object[[1]],s) = FLCore::iter(slot(bd2,s),i) 
         }  
-
+     
      object[[1]]=set(object,exeNm,dir)
      
      exe = paste(system.file('bin', 'linux', package="biodyn", mustWork=TRUE),exeNm, sep='/')
-     
-     if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
-       warning("Executable privilege not set for \n",exe,call.=FALSE)
-     
+    
+    #bug in windows
+    try(
+      if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
+        warning("Executable privilege not set for \n",exe,call.=FALSE) )
+
      # run
      #system(paste('./', exeNm, ' ', cmdOps, sep=''))
      system(paste(exeNm, ' ', cmdOps, sep=''))
@@ -362,7 +372,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
      s=names(slts)[slts=='FLQuant']
      for (s in s[!(s=="catch")])
        try(FLCore::iter(slot(bd,s),i) <- slot(object[[1]],s))
-           
+          
      if (its<=1){
        ##hessian
        x<-file(paste(dir,'admodel.hes',sep='/'),'rb')
@@ -464,7 +474,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
     attributes(bd@params)[['mcmc']]  =mcmc
     attributes(bd@params)[['mcsave']]=mcsave 
     }
-
+ 
   if ("FLQuant"%in%class(index)) index=FLQuants("1"=index)
 
   if (its<=1){
@@ -481,7 +491,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
           residual=log(index/hat))),drop=T)
         
         diagsFn(res)})}
-  
+
   setwd(oldwd)
   
   if (!is.null(catch)) catch(object)=catch

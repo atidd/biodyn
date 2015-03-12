@@ -542,4 +542,5 @@ TOP_OF_MAIN_SECTION
   gradient_structure::set_GRADSTACK_BUFFER_SIZE(3000000);
   gradient_structure::set_CMPDIF_BUFFER_SIZE(200000);
   gradient_structure::set_MAX_NVAR_OFFSET(10000);
+  gradient_structure::set_MAX_DLINKS(100000);
 

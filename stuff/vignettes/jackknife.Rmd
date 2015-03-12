@@ -5,9 +5,6 @@ date: "August 13th, 2014"
 output: rmarkdown::tufte_handout
 ---
 
-<!--
-%% \VignetteEngine{knitr::knitr}
--->
 
 ```{rinitKnitr, echo=FALSE, results="asis"}
 library(knitr)
@@ -25,7 +22,7 @@ options(max.print="75")
 opts_chunk$set(fig.path="out/",
                echo =TRUE,
                eval=TRUE,
-               cache=!TRUE,
+               cache=TRUE,
                cache.path="cache/",
                prompt=FALSE,
                tidy=FALSE,
@@ -85,8 +82,6 @@ We simulate an object with known properties using the biodyn package then conduc
 ```{r,fig.caption="Simulated stock"}
 library(plyr)
 library(biodyn)
-library(ggplot2)
-library(ggplotFL)
 
 bd=sim()
 bd=window(bd,end=49)
