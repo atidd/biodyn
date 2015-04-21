@@ -384,3 +384,10 @@ plotJack=function(x,y,ncol=1){
   
   return(p)}
 
+plotcf=function(x,y,qname="stock"){
+  ggplot(rbind.fill(cbind(What="MP",plot(FLQuants(llply(FLQuants(x,qname))))$data),
+                    cbind(What="OM",plot(FLQuants(llply(FLQuants(y,qname)))$data)))+
+    geom_ribbon(aes(year,min=`25%`,max=`75%`,fill=What),alpha=.5)+
+    geom_line(aes(year,`50%`,col=What))+
+    facet_wrap(~qname)
+  }

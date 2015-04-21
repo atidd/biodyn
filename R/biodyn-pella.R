@@ -1,3 +1,4 @@
+
 utils::globalVariables(c('admbCor','admbProfile',
                          'daply','residual', 'count'))
 
@@ -113,6 +114,7 @@ setPella=function(obj, exeNm='pella', dir=tempdir()) {
 
   biodyn:::writeADMB(ctl, paste(dir, '/', exeNm, '.ctl', sep=''),FALSE)
 
+
   cat('# q ####################\n', file=paste(dir, '/', exeNm, '.ctl', sep=''),append=TRUE)
 
   ctl           = bd.@control[nmIdx[grep('q',nmIdx)],,1]
@@ -136,15 +138,20 @@ setPella=function(obj, exeNm='pella', dir=tempdir()) {
 
   names(prr) = dimnames(bd.@priors)$params
   biodyn:::writeADMB(prr, paste(dir, '/', exeNm, '.prr', sep=''))
-   
+
+  # ref file
+  if (is.na(bd.@ref["refyr"])) 
+       bd.@ref["refyr"]=as.integer(range(bd.)["maxyear"]-(range(bd.)["minyear"]+range(bd.)["maxyear"])/2)
+
+  biodyn:::writeADMB(bd.@ref, paste(dir, '/', exeNm, '.ref', sep=''))
+
   # write data
   ctc = as.list(model.frame(FLQuants("catch"=bd.@catch), drop=TRUE))
   ctc = c(nYrs=length(ctc[[1]]), ctc)
   res = c(ctc, c(nIdxYrs=dim(idx)[1], nIdx=length(unique(idx$name)), idx))
-  
 
   biodyn:::writeADMB(res, paste(dir, '/', exeNm, '.dat', sep=''))
-  
+
 #   # propagate as required
 #   its = dims(bd)$iter
 #   
@@ -158,7 +165,6 @@ setPella=function(obj, exeNm='pella', dir=tempdir()) {
   vcov(bd.)=FLPar(array(NA, dim     =c(dim(params(bd.))[1],dim(params(bd.))[1],1), 
                            dimnames=list(params=dimnames(params(bd.))[[1]],
                                          params=dimnames(params(bd.))[[1]],iter=1)))
-  
   
   options(digits=dgts)
   return(bd.)}
@@ -282,14 +288,13 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
      catch=catch(object)
      catch(object)=propagate(catch(object),dims(index)$iter)
      }
- 
+
   max=min(dims(catch(object))$maxyear,ifelse(is(index)[1]=='FLQuant',dims(index)$maxyear,max(laply(index,function(x) dims(x)$maxyear))))
-  if (!is.na(range(object)['maxyear'])) max=min(max,range(object)['maxyear'])
+  if (!is.na(range(object)['maxyear'])) max=min(max,range(object)['maxyear']) 
   min=min(dims(catch(object))$minyear,ifelse(is(index)[1]=='FLQuant',dims(index)$minyear,max(laply(index,function(x) dims(x)$minyear))))
   if (!is.na(range(object)['minyear'])) min=max(min,range(object)['minyear'])
-
   object=window(object,start=min,end=max)
- 
+
   if ('FLQuant' %in% is(index)){ 
     index =window(index,start=min,end=max)
   }else if ('FLQuants' %in% is(index)){
@@ -302,7 +307,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
   oldwd=getwd()
   setwd(dir)
   exe()
- 
+
   object=list(object,index)
   bd =object[[1]]
   its=max(maply(names(slts), function(x) { 
@@ -311,7 +316,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
           dims(slot(bd,x))$iter 
           })) 
   its=max(its,dims(bd@control)$iter)
- 
+
   nms=dimnames(params(bd))$params
   bd@vcov   =FLPar(array(as.numeric(NA), dim=c(length(nms),length(nms),its), dimnames=list(params=nms,params=nms,iter=seq(its))))
   bd@hessian=bd@vcov
@@ -344,9 +349,10 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
       }
    
   #print(slot(object[[1]],'control'))
- 
+
   cpue=object[[2]]
   bd2 =object[[1]]
+
   for (i in seq(its)){       
      object[[2]] = FLCore::iter(cpue,i) 
      
@@ -355,9 +361,9 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
         }  
      
      object[[1]]=set(object,exeNm,dir)
-     
-     exe = paste(system.file('bin', 'linux', package="biodyn", mustWork=TRUE),exeNm, sep='/')
-    
+
+     exe = paste(system.file('bin', 'linux', package="biodyn", mustWork=TRUE),exeNm, sep='/')      
+
     #bug in windows
     try(
       if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
@@ -392,21 +398,22 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
        #   H<-matrix(readBin(x,'numeric',nopar*nopar),nopar)
        #   try(bd@vcov@.Data[activeParams(object[[1]]),activeParams(object[[1]]),i] <- H, silent=TRUE)
        #close(x)}
-  
+       
        if (file.exists(paste(dir,'pella.hst',sep='/')))
           bd@hst=biodyn:::admbProfile(paste(dir,'pella.hst',sep='/'))$profile
        if (file.exists(paste(dir,'lpr.plt',sep='/')))
           bd@profile=mdply(data.frame(var=c("r", "k","bnow","fnow",
-                                             "msy","bmsy","fmsy","cmsy",
-                                             "bmsy","ffmsy","bk","fr",
-                                             "bratio","fratio","slopeb","slopef")),
+                                            "bnow","fnow","bnowthen","fnowthen",
+                                            "msy","bmsy","fmsy","cmsy",
+                                            "bmsy","ffmsy","bk","fr",
+                                            "bratio","fratio","slopeb","slopef")),
                                 function(var){
                                     #print(var)
                                     fl=paste("lp",var,".plt",sep="")
                                     if (file.exists(fl))
                                       biodyn:::admbPlt(fl)})
        }
-        
+
      bd@params@.Data[  ,i] = object[[1]]@params
      bd@control@.Data[,,i] = object[[1]]@control
      #bd@objFn@.Data[   ,i] = object[[1]]@objFn
@@ -439,7 +446,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
   }
       
   units(bd@mng)='NA'
- 
+
   bd=fwd(bd,catch=catch(bd)[,rev(dimnames(catch(bd))$year)[1]])
 
   if (length(grep('-mcmc',cmdOps))>0 & length(grep('-mcsave',cmdOps))>0){

@@ -1,3 +1,17 @@
+validity<-function(object) {
+  return(TRUE)
+  ## Catch must be continous
+  yrs<-dimnames(catch(object))$year
+  
+  if (!all(yrs == ac(dims(catch(object))$minyear:dims(catch(object))$maxyear)))
+    return("years in catch not continous")
+  
+  # range
+  dims <-dims(object)
+  range<-as.list(object@range)
+  
+  return(TRUE)}
+
 #' biodyn class
 #'
 #' @description A class that implement a biomass dynamic stock assessment model. 
@@ -10,12 +24,13 @@
 #' @slot range   {A \code{numeric} vector containing the quant and year ranges}
 #' @slot model   {A \code{factor} giving name of production function, for now this is only `pellat`}
 #' @slot catch   {An \code{FLQuant} with total catch by year}        
-#' @slot stock   {An \code{FLQuant} which will hold the estimated stock by yaer}       
+#' @slot stock   {An \code{FLQuant} which will hold the estimated stock by year}       
 #' @slot control {An \code{FLPar} which sets initial guess (val) and bounds (min and max) for each parameter. The phase allows a parameter to be fixed if less <0 and for paramters to be estimated sequentially}       
 #' @slot priors  {An \code{array} which sets penalties for parameters}         
 #' @slot params  {An \code{FLPar} with parameter estmates}
 #' @slot vcov    {An \code{FLPar} with the covariance matrix of the parameter estimates} 
 #' @slot hessian {An \code{FLPar} with the hessian of the estimated parameters} 
+#' @slot ref     {\code{numeric} with parameters for estimating mng quantities}
 #' @slot mng     {\code{FLPar} with derived quatities of management interest}
 #' @slot mngVcov {An \code{FLPar} with the variance matrix of management quanties}
 #' @slot diags   {A \code{data.frame} with residuals and covariates from fit of CPUE to stock }     
@@ -49,6 +64,7 @@
     hessian       ='FLPar',
     objFn         ='FLPar',
     ll            ='FLPar',
+    ref           ='numeric',
     mng           ='FLPar',
     mngVcov       ='FLPar',
     profile       ='data.frame',
@@ -56,6 +72,7 @@
     ),
   prototype(
     range       =unlist(list(minyear=as.numeric(NA), maxyear=as.numeric(NA))),
+    ref         =c(nyr=3,nreg=5,refyr=NA,then=3),
     catch       =FLQuant(),
     stock       =FLQuant(),
     model       =models[3],

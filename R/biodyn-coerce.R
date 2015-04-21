@@ -38,12 +38,12 @@ FLBRP2biodyn=function(from){
   bmsy=c(from@refpts["msy",   "biomass"])
   k   =c(from@refpts["virgin","biomass"])
   
-  # bbiomass based reference points
+  # biomass based reference points
   p   =optimise(function(p,bmsy,k) 
     (bmsy-k*(1/(1+p))^(1/p))^2, c(0.001,5), bmsy=bmsy,k=k)$minimum
   k=bmsy/((1/(1+p))^(1/p))
   r=msy/(k*(1/(1+p))^(1/p+1))
-  b0=mean(stock(from)[,1]/k)
+  b0=mean(stock(from)[,1:5]/k)
   
   bd=biodyn()
   
@@ -51,6 +51,9 @@ FLBRP2biodyn=function(from){
   
   bd@catch=catch.obs(from)
   bd@stock=from@stock.obs
+  
+  range(bd)["minyear"]=dims(bd@catch)$minyear
+  range(bd)["maxyear"]=dims(bd@catch)$maxyear
   
   bd}
 

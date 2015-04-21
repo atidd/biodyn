@@ -1,40 +1,67 @@
-utils::globalVariables(c('br','srDev'))
+utils::globalVariables(c('eql','srDev'))
 
 ## MSE function
-mseBiodyn<-function(om,br,srDev,ctrl,prrs,
-                    start,          end,         interval=3,
+#' mseBiodyn
+#' @description Runs a full MSE using an \code{FLStock} object as the Operating Model and \code{biodyn} as the Mangement Procedure
+#'           
+#' @aliases mse
+#' 
+#' @param om an \code{FLStock} object 
+#' @param eql an \code{FLBRP} object that holds the biological parameters for use in the projections
+#' @param mp an \code{biodyn} object that holds the options for the biomass dynamic assessment model
+#' @param range a \code{vector} the starting and end years for the projections, and the interval for running the MP
+#' @param srDev  a \code{FLQuant} with recruitment deviates
+#' @param uDev an \code{FLQuant} or \code{FLQuants} with CPUE residuals
+#' @param ftar a \code{numeric} with target F in HCR
+#' @param fmin a \code{numeric} with minimum F in HCR
+#' @param blim a \code{numeric} with biomass limit for HCR
+#' @param btrig a \code{numeric} with biomass trigger (i.e. when to reduce F) in HCR 
+#' @param what a \code{character} that specifies what is to be used for the reference point in the HCR, recycled as required
+#' @param mult a \code{logical} that specifies whether quantity in HCR options is a multiplier or probability, recycled as required
+#'
+#' @return  a list of \code{data.frame}s with performance measures from OM and summaries from MP, if \code{con!=NULL} will
+#' also write to a MYSQL database
+#'  
+#' @export
+#' @rdname runMSE
+#' 
+#' @seealso \code{\link{biodyn}}
+#' 
+#' @examples
+#' \dontrun{
+#' sim()
+#'    }
+mseBiodyn<-function(om,eql,
+                    control,priors,
+                    srDev =0.3,
+                    uDev  =0.2,
+                    u     =oem,
                     ftar  =0.70,    btrig =0.60,
                     fmin  =0.01,    blim  =0.01,
+                    what  ="msy",
+                    mult  =TRUE,
                     bndF  =NULL,
-                    maxF  =2.0,     
-                    uCV   =0.3,     phaseQ=1,   fishDepend=TRUE,
+                    start   =range(om)["maxyear"],          
+                    end     =start+30,         
+                    interval=3,
+                    maxF    =2.0,     
+                    phaseQ=1,
                     cmdOps=paste('-maxfn 500 -iprint 0 -est')){
  
   ## Get number of iterations in OM
-  nits=c(om=dims(om)$iter, br=dims(params(br))$iter, rsdl=dims(srDev)$iter)
+  nits=c(om=dims(om)$iter, eql=dims(params(eql))$iter, rsdl=dims(srDev)$iter)
   if (length(unique(nits))>=2 & !(1 %in% nits)) ("Stop, iters not '1 or n' in OM")
   if (nits['om']==1) stock(om)=propagate(stock(om),max(nits))
 
   ## Cut in capacity
   maxF=mean(apply(fbar(window(om,end=start)),6,max)*maxF)
   
-  ## hcr without feedback
-  #  hcr parameters
-#   par=hcrParam(btrig=btrig*br['msy','biomass'],
-#                 blim =blim *br['msy','biomass'],
-#                 ftar =ftar *br['msy','harvest'],
-#                 fmin =fmin *br['msy','harvest'])
-#   # loop over years
-#   for (iYr in seq(start+rcvPeriod,range(om,'maxyear')-interval,interval)){
-#     # data from last year then use to set TAC start of next year
-#     TAC=tacFn(om,hcrFn(om,par,iYr-1,1+seq(interval),br,srDev)
-#     om =fwd(om,catch=TAC,sr=br,sr.residuals=srDev)}
-#   # save for reference  
+  ## open loop feed forward
   mou=om
    
   #### Observation Error (OEM) setup #######################
   ## Random variation for CPUE  
-  cpue=oem(window(om,end=start),uCV)
+  cpue=oem(window(om,end=start),uDev)
   
   ## Loop round years
   mp =NULL
@@ -45,17 +72,18 @@ mseBiodyn<-function(om,br,srDev,ctrl,prrs,
     
     ## use data from last year
     cpue=window(cpue,end=iYr-1)
-    cpue[,ac(iYr-(interval:1))]=oem(om[,ac(iYr-(interval:1))],uCV)
+    cpue[,ac(iYr-(interval:1))]=oem(om[,ac(iYr-(interval:1))],uDev)
     
     #### Management Procedure
     ## Set up assessment parameter options
     bd=FLStock2biodyn(window(om,end=iYr-1))
-    params(bd)[dimnames(ctrl)$param]=ctrl[dimnames(ctrl)$param,'val']
+    pnms=dimnames(control)$param[dimnames(control)$param%in%dimnames(params(bd))$params]
+    params(bd)[pnms]=control[pnms,'val']
     
-    bd@priors=prrs
+    bd@priors=priors
     setParams( bd)=cpue 
     setControl(bd)=params(bd)
-    bd@control[dimnames(ctrl)$params,'phase'][]=ctrl[dimnames(ctrl)$params,'phase']
+    bd@control[dimnames(control)$params,'phase'][]=control[dimnames(control)$params,'phase']
     bd@control['q1','phase']=phaseQ
     bd@control['q1','val']  =1
 
@@ -78,7 +106,7 @@ mseBiodyn<-function(om,br,srDev,ctrl,prrs,
     TAC[]=rep(apply(TAC,6,mean)[drop=T],each=interval)
     
     #### Operating Model Projectionfor TAC
-    om =FLash:::fwd(om,catch=TAC,maxF=maxF,sr=br,sr.residuals=srDev)  
+    om =FLash:::fwd(om,catch=TAC,maxF=maxF,sr=eql,sr.residuals=srDev)  
 
     #### Summary Statistics
     ## HCR actions, i.e. is biomass<Btrig?, what is F?, ..
@@ -118,7 +146,7 @@ hcrFn=function(om,btrig,blim,ftar,fmin,start,end,interval,lag=seq(interval)){
     
     trgt=FLQuant(rep(c(trgt),each=length(lag)),dimnames=dmns)
     
-    om=fwd(om,f=trgt,sr=br,sr.residuals=srDev)
+    om=fwd(om,f=trgt,sr=eql,sr.residuals=srDev)
   }
   
   return(om)}
