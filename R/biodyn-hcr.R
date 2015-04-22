@@ -158,7 +158,7 @@ setMethod('hcr', signature(object='biodyn'),
   #dimnames(rtn)$year=min(hcrYrs)  
   if (length(hcrYrs)>1){
     rtn=window(rtn,end=max(hcrYrs))
-    rtn[,ac(hcrYrs)]=rtn[,ac(min(hcrYrs))]}
+    rtn[,ac(hcrYrs)]=rtn[,dimnames(rtn)$year[1]]}
   
   ### Bounds ##################################################################################
   ## F
