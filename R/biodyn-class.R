@@ -26,6 +26,7 @@ validity<-function(object) {
 #' @slot catch   {An \code{FLQuant} with total catch by year}        
 #' @slot stock   {An \code{FLQuant} which will hold the estimated stock by year}       
 #' @slot control {An \code{FLPar} which sets initial guess (val) and bounds (min and max) for each parameter. The phase allows a parameter to be fixed if less <0 and for paramters to be estimated sequentially}       
+#' @slot hcr     {A \code{data.frame} with harvest contreol rule options}       
 #' @slot priors  {An \code{array} which sets penalties for parameters}         
 #' @slot params  {An \code{FLPar} with parameter estmates}
 #' @slot vcov    {An \code{FLPar} with the covariance matrix of the parameter estimates} 
@@ -60,6 +61,7 @@ validity<-function(object) {
     params        ='FLPar',
     control       ='FLPar',
     priors        ='array',
+    hcr           ='data.frame',
     vcov          ='FLPar',
     hessian       ='FLPar',
     objFn         ='FLPar',
@@ -165,3 +167,9 @@ setMethod('biodyns', signature(object='list'),
             )
             
           }) 
+
+if (FALSE){
+  nms=c("ftar","flim","btrig","blim")
+  
+  data.frame(what,stat)
+  }

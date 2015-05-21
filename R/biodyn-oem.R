@@ -27,9 +27,13 @@ setMethod( 'sim',   signature(stock='missing',brp='missing'),
                     harvest=FLQuant(FLQuant(c(seq(0,1.5,length.out=30), 
                                               rev(seq(0.5,1.5,length.out=15))[-1],
                                               rep(0.5,5)))*biodyn:::fmsy(biodyn(params=params))),
-                    bounds =c(0.1,10), ...) {
+                    bounds =c(0.1,10),
+                    p=NULL,b0=NULL,...) {
 
   args <- list(...)
+  
+  if (!is.null(p))  params["p"] =p
+  if (!is.null(b0)) params["b0"]=b0
   
   nyr <- dims(harvest)$year
   object = biodyn(model ='pellat',

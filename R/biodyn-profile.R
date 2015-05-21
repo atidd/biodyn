@@ -48,7 +48,8 @@ setMethod('profile', signature(fitted='biodyn'),
                                        model.frame(refpts(x))[,-4],
                                        stock  =c(stock(  x)[,ac(range(x)['maxyear'])]%/%bmsy(x)),
                                        harvest=c(harvest(x)[,ac(range(x)['maxyear'])]%/%fmsy(x))),
-                   run  =TRUE,...){
+                   run  =TRUE,
+                   comp =FALSE,...){
         if (is.FLQuant(index)) index=FLQuants(index)
         for (i in seq(length(index)))
           if (dims(index[[i]])$maxyear>=dims(stock(fitted))$maxyear) stop('index years greater in length than stock')
@@ -91,6 +92,15 @@ setMethod('profile', signature(fitted='biodyn'),
         res=fit(f,index)
         res@catch=iter(res@catch,1)
         rtn=fn(res)
+
+        if (comp){
+          dgs=bd@diags[,c(".id","year","residual")]
+          #rtn=transform(rtn,name=nms[.id])
+          
+          names(dgs)=c("name","year","residual")
+          
+          return(list(profile=rtn,diags=dgs))
+          }
         
         return(rtn)})
 

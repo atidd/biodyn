@@ -49,7 +49,7 @@ setExe=function(exeNm,package,dir=tempdir()){
   # Linux
   if (R.version$os=='linux-gnu') {
     exe = paste(system.file('bin', 'linux', package=package, mustWork=TRUE),exeNm, sep='/')
-    if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
+    if (length(grep("-rwxrwxr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
       warning("Executable privilege not set for \n",exe,call.=FALSE)
     
     file.copy(exe, dir)
@@ -366,7 +366,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
 
     #bug in windows
     try(
-      if (length(grep("-rwxr-xr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
+      if (length(grep("-rwxrwxr-x",system(paste("ls -l",exe),inter=TRUE)))==0)
         warning("Executable privilege not set for \n",exe,call.=FALSE) )
 
      # run
@@ -379,7 +379,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
      for (s in s[!(s=="catch")])
        try(FLCore::iter(slot(bd,s),i) <- slot(object[[1]],s))
           
-     if (its<=1){
+     if (its<=1 & file.exists(paste(dir,'admodel.hes',sep='/'))){
        ##hessian
        x<-file(paste(dir,'admodel.hes',sep='/'),'rb')
        nopar<-readBin(x,'integer',1)

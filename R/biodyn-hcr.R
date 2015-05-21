@@ -131,7 +131,7 @@ setMethod('hcr', signature(object='biodyn'),
            bndTac=NULL, #c(1,Inf),
            iaF   =TRUE, 
            iaTac =TRUE, 
-           maxF  =2,
+           maxF  =1,
            ...) {
   ## HCR
   dimnames(params)$params=tolower(dimnames(params)$params)

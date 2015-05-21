@@ -152,6 +152,7 @@ setMethod( 'fwd', signature(object='biodyn',ctrl='missing'),
                     bounds =list(catch=c(Inf,Inf)),
                     lag    =0,
                     end    =NULL,
+                    starvationRations=0.75,
                     ...) {
      
      ## target arg is an FLQuant
@@ -160,7 +161,8 @@ setMethod( 'fwd', signature(object='biodyn',ctrl='missing'),
          'FLQuant' %in% class(harvest) |
          'FLQuant' %in% class(catch))
         res=fwdFn(object,ctrl=ctrl,
-              catch,harvest,stock,pe,peMult,minF,maxF,bounds,lag,end,...) 
+              catch,harvest,stock,pe,peMult,minF,maxF,bounds,lag,end,
+              starvationRations=starvationRations,...) 
      else if ('FLQuants' %in% class(stock))  
         res=biodyns(llply(stock, function(x) fwdFn(object,ctrl=ctrl,
                  catch,harvest,x,pe,peMult,minF,maxF,bounds,lag,end,...)))
@@ -179,6 +181,7 @@ fwdFn=function(object,
                stock, 
                pe, peMult,
                minF,    maxF,
+               starvationRations,
                ...){
         
       lag=0
@@ -275,7 +278,11 @@ fwdFn=function(object,
           } else {
               object@catch[,ac(y)]=relFn(object@stock,stock[,ac(y+1)],lag) - object@stock[,ac(y)] - sp.}
          
-         object@stock[,ac(y+1)] = object@stock[,ac(y)] - object@catch[,ac(y)] + sp.
+         object@catch[,ac(y)]=qmin(object@stock[,ac(y)]*starvationRations,
+                                   object@catch[,ac(y)])
+                                   
+         object@stock[,ac(y+1)] = object@stock[,ac(y)] - 
+                                  object@catch[,ac(y)] + sp.
     
     ## Not implemented     
     ### bounds
