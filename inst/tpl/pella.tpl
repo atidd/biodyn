@@ -20,6 +20,7 @@ GLOBALS_SECTION
   #include "admodel.h"
   #include <string>
   #include <dnorm.cpp> //include functions from custom library
+  #include <nr.cpp>    //include functions from custom library
 
   using std::string;
 
@@ -34,9 +35,9 @@ GLOBALS_SECTION
   ofstream priors("prr.txt");
   ofstream bounds("bnd.txt");
   ofstream    lls("lls.txt");
-
+  
 DATA_SECTION
-  // Read data file
+  // Read data [ile
   init_int nc
   init_matrix Cdata(1,2,1,nc)  // Year | C
   init_int ni
@@ -57,9 +58,6 @@ DATA_SECTION
   number halfnlog2pi
   number stepN
   number stepSz
-  
-
-  number nReg
 
   // Switch to control file
   !! string run_name = string(adprogram_name);
@@ -98,7 +96,14 @@ DATA_SECTION
   init_vector fmsy_prior(1,4)
   init_vector q_prior(1,4)
   init_vector s_prior(1,4)
+
+  // Switch to ref file for reference year etc
+  !! change_datafile_name((adstring)run_name.c_str() + ".ref");
   
+  // c(nyr=3,nreg=5,refyr=NA)
+  init_vector ref(1,4)
+
+
 PARAMETER_SECTION
   // Estimated
   !! phz = (int) _r_plui[1];
@@ -118,12 +123,15 @@ PARAMETER_SECTION
   !! ub  =       _p_plui[3];
   init_bounded_number _p(lb,ub,phz)
   
+  //init_bounded_number_vector F(1,nc,0,1)
+
   //change from log
   //init_bounded_number_vector logq(1,nIdx,qLo,qHi,qPh)  
   //init_bounded_number_vector logs(1,nIdx,sLo,sHi,sPh)  
   init_bounded_number_vector _q(1,nIdx,qLo,qHi,qPh)  
   init_bounded_number_vector _s(1,nIdx,sLo,sHi,sPh)  
-
+  
+  
   // Derived
   sdreport_number r
   sdreport_number k
@@ -134,6 +142,10 @@ PARAMETER_SECTION
   sdreport_number cnow
   sdreport_number bnow
   sdreport_number fnow
+  sdreport_number bthen
+  sdreport_number fthen
+  sdreport_number bnowthen
+  sdreport_number fnowthen
   sdreport_number msy
   sdreport_number bmsy
   sdreport_number fmsy
@@ -165,16 +177,21 @@ PARAMETER_SECTION
 
   // Updated
   vector B(1,nc+1)
+  vector F(1,nc)
   vector Bfit(1,ni)
   vector Ifit(1,ni)
   vector  RSS(1,nIdx)
     
   // Report
-  matrix summary(1,nc,1,7)  // Year | B | C | I | Ifit | stockHat | stock.
+  matrix summary(1,nc,1,8)  // Year | B | C | I | Ifit | stockHat | stock | F.
 
   // likelihood profile
   likeprof_number lpbnow;
   likeprof_number lpfnow;
+  likeprof_number lpbthen;
+  likeprof_number lpfthen;
+  likeprof_number lpbnowthen;
+  likeprof_number lpfnowthen;
   likeprof_number lpmsy;
   likeprof_number lpbmsy;
   likeprof_number lpfmsy;
@@ -194,8 +211,8 @@ PARAMETER_SECTION
   objective_function_value neglogL
 
 PRELIMINARY_CALCS_SECTION
+  
   halfnlog2pi = 0.5*ni*log(2*pi);
-  nReg=5;
   stepN =50;
   stepSz=0.05;
 
@@ -216,6 +233,10 @@ PRELIMINARY_CALCS_SECTION
   _a    = _a_plui[4];
   _p    = _p_plui[4];
 
+
+  for(int i=1; i<=nc; i++) F[i]=_r*0.2;
+
+ 
   for (int j=1; j<=nIdx; j++){
     // change from log
     //logq(j) = qPr[j];
@@ -227,6 +248,11 @@ PRELIMINARY_CALCS_SECTION
   // likelihood profile 
   lpbnow  =bnow;
   lpfnow  =fnow;
+  lpbnow  =bthen;
+  lpfnow  =fthen;
+  lpbnow  =bnowthen;
+  lpfnow  =fnowthen;
+
   if (1!=2){
   lpmsy   =msy;
   lpbmsy  =bmsy;
@@ -246,6 +272,18 @@ PRELIMINARY_CALCS_SECTION
 
   lpbnow.set_stepnumber(stepN);
   lpbnow.set_stepsize(stepSz);
+
+  lpfnow.set_stepnumber(stepN);
+  lpfnow.set_stepsize(stepSz);
+
+  lpbthen.set_stepnumber(stepN);
+  lpbthen.set_stepsize(stepSz);
+
+  lpfnowthen.set_stepnumber(stepN);
+  lpfnowthen.set_stepsize(stepSz);
+
+  lpbnowthen.set_stepnumber(stepN);
+  lpbnowthen.set_stepsize(stepSz);
 
   lpfnow.set_stepnumber(stepN);
   lpfnow.set_stepsize(stepSz);
@@ -304,6 +342,10 @@ PROCEDURE_SECTION
   // likelihood profile 
   lpbnow  =bnow;
   lpfnow  =fnow;
+  lpbthen =bthen;
+  lpfthen =fthen;
+  lpbnowthen  =bnowthen;
+  lpfnowthen  =fnowthen;
 
   if (1!=2){
   lpmsy   =msy;
@@ -339,7 +381,7 @@ REPORT_SECTION
         <<"# neglogL"<<endl<<neglogL<<endl<<endl;
   report<<setprecision(12)
         <<"# Model summary"<<endl
-        <<" year stock catch index hat stockHat stock."<<endl
+        <<" year stock catch index hat stockHat stock F."<<endl
         <<summary<<endl;
 
  write_ll();
@@ -360,8 +402,15 @@ FUNCTION get_fit
     }
   
   B[1] = k*a;
-  for(int t=1; t<=nc; t++)
-    B[t+1] = sfabs(B[t] + r/p*B[t]*(1-pow(B[t]/k,p)) - C[t]);
+  for(int t=1; t<=nc; t++){
+    if (_p_plui[1]<-1){
+       F[t]=nr(-log(1-C[t]/B[t])*.5, C[t], B[t], r, k);
+
+       B[t+1]=(r-F[t])*B[t]*exp(r-F[t])/(r-F[t]+(r/k)*B[t]*(exp(r-F[t])-1));
+
+       }else
+       B[t+1]=sfabs(B[t]-C[t])+r/p*B[t]*(1-pow(B[t]/k,p));
+       }
 
   // constricted likelihood
   bool flag=false;
@@ -401,8 +450,14 @@ FUNCTION get_fit
   cnow =C[nc];
   fnow =C[nc]/B[nc];
   bnow =B[nc];
+  fthen =C[nc-ref[4]+1]/B[nc-ref[4]+1];
+  bthen =B[nc-ref[4]+1];
+  fnowthen  =fnow/fthen;
+  bnowthen =bnow/bthen;
+
+   
   msy  =r*k*pow(1/(1+p),1/p+1);
-  bmsy =(k*pow((1/(1+p)),(1/p)));
+  bmsy =k*pow((1/(1+p)),(1/p));
   fmsy =msy/bmsy;
   cmsy =C[nc]	/msy;
   bbmsy=bnow/bmsy;
@@ -416,12 +471,12 @@ FUNCTION get_fit
   _bratio=0.0;
   _fratio=0.0;
   
-  for (int i=nc; i>nc-3; i--){
+  for (int i=nc; i>nc-ref[2]; i--){
     bratio+=B[i];
     fratio+=C[i]/B[i];
     
-    _bratio+=B[i-3];
-    _fratio+=C[i-3]/B[i-3];
+    _bratio+=B[i-ref[3]];
+    _fratio+=C[i-ref[3]]/B[i-ref[3]];
     }
  bratio=bratio/_bratio;
  fratio=fratio/_fratio;
@@ -430,25 +485,25 @@ FUNCTION get_fit
   x =0.0;
    y=0.0; 
   xx=0.0; 
-  for (int i=nc; i>nc-nReg; i--){
+  for (int i=nc; i>nc-ref[1]; i--){
     x +=i;
     xx+=i*i;  
     y +=B[i];  
     xy+=i*B[i];  
     }
-  slopeb = (nReg*xy - x*y)/(nReg*xx - x*2.0);
+  slopeb = -(ref[1]*xy - x*y)/(ref[1]*xx - x*x);
    
   xy=0.0; 
   x =0.0;
    y=0.0; 
   xx=0.0; 
-  for (int i=nc; i>nc-nReg; i--){
+  for (int i=nc; i>nc-ref[1]; i--){
     x +=i;
     xx+=i*i;  
     y +=C[i]/B[i];  
     xy+=i*C[i]/B[i];  
     }
-  slopef = (nReg*xy - x*y)/(nReg*xx - x*2.0);
+  slopef = -(ref[1]*xy - x*y)/(ref[1]*xx - x*x);
    
 
 FUNCTION get_neglogL
@@ -471,20 +526,49 @@ FUNCTION get_neglogL
  
   if (r_prior[1]>0)    neglogL += r_prior[1]*dnorm(r, r_prior[2], r_prior[3]); // /dnorm(r_prior[2], r_prior[2], r_prior[3]);
   if (k_prior[1]>0)    neglogL += k_prior[1]*dnorm(k, k_prior[2], k_prior[3]); // /dnorm(k_prior[2], k_prior[2], k_prior[3]);
-  if (p_prior[1]>0)    neglogL += p_prior[1]*dnorm(p, p_prior[2], p_prior[ 3]); // /dnorm(p_prior[2], p_prior[2], p_prior[3]);
+  if (p_prior[1]>0)    neglogL += p_prior[1]*dnorm(p, p_prior[2], p_prior[3]); // /dnorm(p_prior[2], p_prior[2], p_prior[3]);
   if (a_prior[1]>0)    neglogL += a_prior[1]*dnorm(a, a_prior[2], a_prior[3]); // /dnorm(a_prior[2], a_prior[2], a_prior[3]);
+
   if ( msy_prior[1]>0) neglogL += msy_prior[1]*dnorm(_msy,  msy_prior[2],  msy_prior[3]); // /dnorm( msy_prior[2],  msy_prior[2],  msy_prior[3]);
   if (bmsy_prior[1]>0) neglogL += bmsy_prior[1]*dnorm(_bmsy, bmsy_prior[2], bmsy_prior[3]); // /dnorm(bmsy_prior[2], bmsy_prior[2], bmsy_prior[3]);
-  if (fmsy_prior[1]>0) neglogL += fmsy_prior[1]*dnorm(_fmsy, fmsy_prior[2], fmsy_prior[3]); // /dnorm(fmsy_prior[2], fmsy_prior[2], fmsy_prior[3]);
+  if (fmsy_prior[1]==1)  neglogL += fmsy_prior[1]*dnorm(_fmsy, fmsy_prior[2], fmsy_prior[3]); // /dnorm(fmsy_prior[2], fmsy_prior[2], fmsy_prior[3]);
+
+  if ( msy_prior[1]==10) {
+      double a=value(C[(int)msy_prior[2]]/B[(int)  msy_prior[2]]);
+           
+      neglogL +=  msy_prior[1]*dnorm(_msy,a,a*msy_prior[2]); 
+      }
+  if (fmsy_prior[1]==10) {
+      double a=value(C[(int)msy_prior[2]]/B[(int)  fmsy_prior[2]]);
+           
+      neglogL +=  fmsy_prior[1]*dnorm(_fmsy,a,a*fmsy_prior[2]); 
+      }
+  if (bmsy_prior[1]==10) {
+      double a=value(C[(int)bmsy_prior[2]]/B[(int)  bmsy_prior[2]]);
+           
+      neglogL += bmsy_prior[1]*dnorm(_bmsy,a,a*bmsy_prior[2]); 
+      }
+
+  if(_p_plui[1]<-1){
+     for (int t=1; t<=nc; t++)
+       neglogL += (2*.1*.1)*(log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((r-F[t])))/(r-F[t])))))*
+                                    (log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((r-F[t])))/(r-F[t])))));}
+   
+  //if (bmsy_prior[1]==10) neglogL += bmsy_prior[1]*dnorm(_bmsy, C[(int)bmsy_prior[2]]/B[(int)bmsy_prior[2]], 
+  //                                                             C[(int)bmsy_prior[2]]/B[(int)bmsy_prior[2]]*bmsy_prior[3]); 
+  //if (fmsy_prior[1]==10) neglogL += fmsy_prior[1]*dnorm(_fmsy, C[(int)fmsy_prior[2]]/B[(int)fmsy_prior[2]], 
+  //                                                             C[(int)fmsy_prior[2]]/B[(int)fmsy_prior[2]]*fmsy_prior[3]); 
+
+
  //for (i=1; i<=nIdx; i++){
   //  if (q_prior[i]>0) neglogL += q_prior[1]*dnorm(q, q_prior[2], q_prior[3]); // /dnorm(q_prior[2], q_prior[2], q_prior[3]);
   //  if (s_prior[i]>0) neglogL += s_prior[1]*dnorm(s, s_prior[2], s_prior[3]); // /dnorm(s_prior[2], s_prior[2], s_prior[3]);}
     
-
 FUNCTION get_summary
   summary.colfill(1,(dvector)Cyear);
   summary.colfill(2,B);
   summary.colfill(3,C);
+  summary.colfill(8,F);
 
   for(int i=1; i<=ni; i++)  // allow missing years in abundance index
     {

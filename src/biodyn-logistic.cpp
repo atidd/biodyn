@@ -3,40 +3,35 @@
 //PELLA , J. J., and P. K. T OMLINSON , 1969 A generalized stock production model. Bulletin of the Inter-American Tropical Tuna Commission 13: 419-496.
 //PRAGER , M. H., 1994 A suite of extensions to a nonequilibrium surplus-production model. U. S. Fishery Bulletin 92: 374-389.
 
-#include <biodyn-logistic.h>
-  
+#include "../inst/include/biodyn-logistic.h"
+
 logistic::logistic(FLQuant F, FLQuant C, FLQuant B, FLQuant params){
-  FLQuant ctc=C;
-  FLQuant hvt=F;
-  FLQuant stk=B;
+  hvt=F;
+  ctc=C;
+  stk=B;
   
-  FLQuant par=params;
+  par=params;
   }
      
 void logistic::nr(double tolVal, int niter){
-  
-  for (int i=1; i<=stk.get_niter(); i++){
-     int iters=0;
-     int tol  =1;
-     for (int yr=1; yr<=ctc.get_nyear(); yr++){
-        while (tol>tolVal&iters<niter){
+    for (int i=1; i<=ctc.get_niter(); i++){
+      for (int yr=1; yr<=ctc.get_nyear()-1; yr++){
+        int  iters=0;
+        double val=1;
+        while (iters<niter){
          iters++;
-         double func = ctc(1,yr,1,1,1,i)-yield(hvt(1,yr,1,1,1,i),stk(1,yr,1,1,1,i),par(1,yr,1,1,1,i),par(2,yr,1,1,1,i));
-         double grad = gradY(hvt(1,yr,1,1,1,i),ctc(1,yr,1,1,1,i),stk(1,yr,1,1,1,i),par(1,yr,1,1,1,i),par(2,yr,1,1,1,i));
-         double val  =NewRhap(hvt(1,yr,1,1,1,i),func,grad);
+         double func = ctc(1,yr,1,1,1,i)-yield(hvt(1,yr,1,1,1,i),stk(1,yr,1,1,1,i),par(1,1,1,1,1,i),par(2,1,1,1,1,i));
+         double grad = gradY(hvt(1,yr,1,1,1,i),ctc(1,yr,1,1,1,i),stk(1,yr,1,1,1,i),par(1,1,1,1,1,i),par(2,1,1,1,1,i));
+         val  = NewRhap(func,grad);
         
-         tol=abs(hvt(1,yr,1,1,1,i)-val);
-         hvt(1,yr,1,1,1,i)=val;
+         hvt(1,yr,1,1,1,i)-=val;
          }
        
    stk(1,yr+1,1,1,1,i)=stock(hvt(1,yr,1,1,1,i),ctc(1,yr,1,1,1,i),
-                             stk(1,yr,1,1,1,i),par(1,yr,1,1,1,i),
-                             par(2,yr,1,1,1,i));
+                             stk(1,yr,1,1,1,i),par(1,1,1,1,1,i),
+                             par(2,1,1,1,1,i));
    }}}
      
-logistic::~logistic(void){
-;  
-}     
 
 double logistic::gradY(double F, double C, double  B, double r, double K){
 
@@ -51,5 +46,24 @@ double logistic::gradY(double F, double C, double  B, double r, double K){
 
   return(-(1/expr1*expr10-expr2*((expr3*expr5/expr4 + expr7/(expr4*expr4))/expr9)));
   }
+  
+  
+ logistic::~logistic(void){};    
 
  
+//[[Rcpp::export]]  
+FLQuant stockCPP(FLQuant F,FLQuant C,FLQuant B, FLQuant params, double tol=1e-10, int niter=200) {
+	logistic nr(F,C,B,params);
+	
+  nr.nr(tol,niter);
+	
+	return(nr.stk);}
+
+//[[Rcpp::export]]  
+FLQuant fCPP(FLQuant F, FLQuant C, FLQuant B, FLQuant params, double tol=1e-10, int niter=200) {
+	
+	logistic nr(F,C,B,params);
+	
+	nr.nr(tol,niter);
+	
+	return(nr.hvt);}

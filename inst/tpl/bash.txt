@@ -1,4 +1,5 @@
-export ADMB_HOME=~/admb/build/dist
+export ADMB_HOME=/home/laurie/Desktop/admb/build/dist
 export PATH=$ADMB_HOME/bin:$PATH
+
 
 

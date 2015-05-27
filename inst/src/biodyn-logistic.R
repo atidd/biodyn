@@ -1,12 +1,12 @@
-#PELLA , J. J., 1967 A study of methods to estimate the Schaefer model parameters with special reference to the yellowfin tuna fishery in the eastern tropical Pacific ocean. University of Washington, Seattle.
-#PELLA , J. J., and P. K. T OMLINSON , 1969 A generalized stock production model. Bulletin of the Inter-American Tropical Tuna Commission 13: 419-496.
-#PRAGER , M. H., 1994 A suite of extensions to a nonequilibrium surplus-production model. U. S. Fishery Bulletin 92: 374-389.
+##PELLA , J. J., 1967 A study of methods to estimate the Schaefer model parameters with special reference to the yellowfin tuna fishery in the eastern tropical Pacific ocean. University of Washington, Seattle.
+##PELLA , J. J., and P. K. T OMLINSON , 1969 A generalized stock production model. Bulletin of the Inter-American Tropical Tuna Commission 13: 419-496.
+##PRAGER , M. H., 1994 A suite of extensions to a nonequilibrium surplus-production model. U. S. Fishery Bulletin 92: 374-389.
 
 alpha=function(r,F) r-F
 beta =function(r,K) r/K
 
 yield<-function(F,B,r,K)
-    (F/(r/K))*log(1-(r/K)*B*(1-exp((r-F)))/(r-F))
+    F/(r/K)*log(1-(r/K)*B*(1-exp((r-F)))/(r-F))
 
 fnY   =function(F,C,B,r,K)
   C-yield(F,B,r,K)
@@ -15,16 +15,16 @@ minY   =function(F,C,B,r,K)
   fnY(F,C,B,r,K)^2
 
 gradY =function(F,C,B,r,K){
-  .expr1  <- r/K
-  .expr2  <- F/.expr1
-  .expr3  <- .expr1*B
-  .expr4  <- r-F
-  .expr5  <- exp(.expr4)
-  .expr7  <- .expr3 * (1 - .expr5)
-  .expr9  <- 1 - .expr7/.expr4
+  .expr1 <- r/K
+  .expr2 <- F/.expr1
+  .expr3 <- .expr1 * B
+  .expr4 <- r - F
+  .expr5 <- exp(.expr4)
+  .expr7 <- .expr3 * (1 - .expr5)
+  .expr9 <- 1 - .expr7/.expr4
   .expr10 <- log(.expr9)
-  .value  <- C - .expr2 * .expr10
-  -(1/.expr1 * .expr10 - .expr2 * ((.expr3 *.expr5/.expr4 + .expr7/(.expr4^2))/.expr9))
+  .value <- C - .expr2 * .expr10
+  -(1/.expr1 * .expr10 - .expr2 * ((.expr3 *.expr5/.expr4 + .expr7/.expr4^2)/.expr9))
   }
 
 gradMinY=function(F,C,B,r,K)
@@ -41,14 +41,14 @@ minF   =function(F,C,B,r,K)
 
 gradF=function(F,C,B,r,K){
   .expr1 <- r/K
-  .expr2 <- C*.expr1
-  .expr3 <- .expr1*B
-  .expr4 <- r-F
+  .expr2 <- C * .expr1
+  .expr3 <- .expr1 * B
+  .expr4 <- r - F
   .expr5 <- exp(.expr4)
-  .expr7 <- .expr3*(.expr5 - 1)
+  .expr7 <- .expr3 * (.expr5 - 1)
   .expr9 <- .expr7/.expr4 + 1
   .expr10 <- log(.expr9)
-  1 - .expr2 * ((.expr3*.expr5/.expr4 - .expr7/(.expr4^2))/.expr9)/.expr10^2
+  1 - .expr2 * ((.expr3 * .expr5/.expr4 - .expr7/.expr4^2)/.expr9)/.expr10^2
   }
 
 gradMinF=function(F,C,B,r,K)
@@ -60,13 +60,11 @@ NewRhap=function(x, func, grad)
 prj<-function(F,C,B,r,K)
   alpha(r,F)*B*exp(alpha(r,F))/(alpha(r,F)+beta(r,K)*B*(exp(alpha(r,F))-1))
 
-nr<-function(C,B,r,K,B0,tolVal=1e-10,niter=200,yield=TRUE){
+nr<-function(C,F,B,r,K,tolVal=1e-5,niter=100,yield=TRUE){
   
-  F=-log(1-C/B[,-dim(B)[2]])*.5
-  for (t in rev(rev(dimnames(C)$year)[-1])){
-       iters=0;tol=1;val=1
-       
-       while (abs(val)>tolVal&iters<niter){
+  for (t in rev(rev(dimnames(B)$year)[-1])){
+       iters=0;tol=1
+       while (tol>tolVal&iters<niter){
          iters  =iters+1
          if (yield){
            func   = fnY(F[,t],C[,t],B[,t],r,K) 
@@ -75,23 +73,22 @@ nr<-function(C,B,r,K,B0,tolVal=1e-10,niter=200,yield=TRUE){
            func   = fnF(F[,t],C[,t],B[,t],r,K) 
            grad   = gradF(F[,t],C[,t],B[,t],r,K)
            }
-
-         val=func/grad
-        
-         F[,t]=F[,t]-val
          
-       #print(c(func,val,c(F[,t])))
-       }
+         val=NewRhap(F[,t],func,grad)
+        
+         if (is.na(val)) 
+           tol=tolVal
+         else{
+         tol=abs(F[,t]-val)
+         F[,t]=val}
+         }
        
-   #print(c(B[,ac(as.numeric(t)+1)],prj(F[,t],C[,t],B[,t],r,K)))     
    B[,ac(as.numeric(t)+1)]=prj(F[,t],C[,t],B[,t],r,K)
    }
   
   return(list(F=F,B=B))}
 
-slv<-function(C,r,K,B0){
-  B=window(FLQuant(K*B0,dimnames=dimnames(C)),end=max(as.numeric(dimnames(C)$year))+1)
-  F=-log(1-C/B[,-dim(B)[2]])
+slv<-function(C,F,B,r,K){
   for (t in rev(rev(dimnames(B)$year)[-1])){
     res=ucminf(c(F[,t]), fn = minF, #gr = gradMinF, 
                control = list(trace = -1), 
@@ -103,19 +100,6 @@ slv<-function(C,r,K,B0){
     }
   
   return(FLQuants(F=F,B=B))}
-
-setGeneric('f', function(object,...) standardGeneric('f'))
-setMethod( 'f',signature(object='biodyn'),
-      function(object,tolVal=1e-10,niter=200){
-          fCPP(catch(object),params(object)[c("r","k","b"),tolVal,niter])
-        })
-
-setGeneric('computeStock', function(object,...) standardGeneric('computeStock'))
-setMethod( 'computeStock',signature(object='biodyn'),
-           function(object,tolVal=1e-10,niter=200){
-             stockCPP(catch(object),params(object)[c("r","k","b"),tolVal,niter])
-             })
-
 
 if (FALSE){
   grad(yield, .01,         B=B[,t],r=r,K=K)
@@ -136,3 +120,5 @@ if (FALSE){
                function(F) c(gradY(F,C[,t],B[,t],r,K))))+
     geom_line(aes(F,V1))
   }
+
+

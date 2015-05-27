@@ -1,0 +1,185 @@
+---
+title: "North Atlanic Albacore"
+subtitle: "Implicit Management Procedure"
+author: "Laurence Kell"
+date: "26/03/2015"
+output: html_document
+---
+
+PELLA , J. J., 1967 A study of methods to estimate the Schaefer model parameters with special reference to the yellowfin tuna fishery in the eastern tropical Pacific ocean. University of Washington, Seattle.
+
+PELLA , J. J., and P. K. T OMLINSON , 1969 A generalized stock production model. Bulletin of the Inter-American Tropical Tuna Commission 13: 419-496.
+
+PRAGER , M. H., 1994 A suite of extensions to a nonequilibrium surplus-production model. U. S. Fishery Bulletin 92: 374-389.
+
+```{r, echo=FALSE}
+library(knitr)
+
+opts_chunk$set(comment=NA, 
+               fig.width =6, 
+               fig.height=6,
+               fig.path  ="../tex/",
+               warning=FALSE, 
+               message=FALSE, 
+               error  =FALSE, 
+               echo   =FALSE, 
+               eval   =TRUE,
+               cache  =TRUE)
+```
+
+```{r, echo=FALSE}
+#install.packages("C:/Users/laurie.kell/Documents/MEGAsync/temp/aspic_2.0.1.tar.gz",repos=NULL,type="source",INSTALL_opts=c("--no-multiarch"))
+
+library(FLCore)
+library(ggplotFL)
+library(scales)
+library(plyr)
+library(reshape)
+library(FLBRP)
+library(biodyn)
+library(aspic)
+library(plotrix)
+library(corrplot)
+library(diags)
+library(ucminf)
+library(numDeriv)
+library(FLFishery)
+library(FLasher)
+library(testthat)
+
+source('~/Desktop/flr/git/biodyn/R/biodyn-F.R')
+
+theme_set(theme_bw(10))
+
+dirMy ="c:/temp/albn"
+dirDat=paste(dirMy,"/data",sep="")
+dirInp="http://rscloud.iccat.int/kobe/Inputs/albn/2013/aspic/"
+dirInp="/home/laurie/Desktop/rfmos/iccat/kobe/Inputs/albn/2013/aspic"
+```
+
+
+```{r,eval=FALSE}
+# aspic objects
+asp=aspics(paste(dirInp,"/run",1:7,"/aspic.inp",sep=""))
+control(asp[[4]])["k","val"]=par[4,"K"]
+control(asp[[4]])["msy","val"]=par[4,"MSY"]
+control(asp[[4]])["k","fit"]=0
+
+asp=aspics(llply(asp,fit))
+```
+
+
+```{r abn-imp-aspic,fig.height=4,fig.width=6}
+plot(asp)+theme_bw()
+```
+
+**Figure 1** ASPIC runs
+
+```{r,eval=FALSE}
+Fs<-FLQuants(mlply(paste(dirInp,"/run",1:7,"/aspic.rdat",sep=""),function(x){
+   dat2=dget(x)
+   window(as.FLQuant(transform(dat2$t.series[c("year","F.total")],
+                                    data=F.total)[,-2]),end=2011)}))
+
+Bs<-FLQuants(mlply(paste(dirInp,"/run",1:7,"/aspic.rdat",sep=""),function(x){
+   dat2=dget(x)
+   window(as.FLQuant(transform(dat2$t.series[c("year","b")],
+                                    data=b)[,-2]),end=2011)}))
+
+save(asp,Bs,Fs,file="/home/laurie/Desktop/flr/git/biodyn/stuff/data/asp.RData")
+```
+
+```{r,eval=FALSE}
+bds =biodyns(llply(asp,function(x) as(x,"biodyn")))
+
+save(bds,file="/home/laurie/Desktop/flr/git/biodyn/stuff/data/bds.RData")
+```
+
+#Newton Rhapson
+Estimate stock biomass next year.
+
+```{r}
+load("/home/laurie/Desktop/flr/git/biodyn/stuff/data/asp.RData")
+load("/home/laurie/Desktop/flr/git/biodyn/stuff/data/bds.RData")
+```
+
+```{r}
+system.time(rnr<-nr(catch(bds[[2]]),
+                    stock(bds[[2]]),
+                    c(params(bds[[2]])["r"]),
+                    c(params(bds[[2]])["k"]),
+                    c(params(bds[[2]])["b0"])))
+```
+
+```{r}
+system.time(cpp<-fCPP(harvest(bds[[2]]), 
+                      catch(bds[[2]]), 
+                      stock(bds[[2]]), 
+                      params(bds[[2]])[c("r","k","b0")]))
+```
+
+```{r}
+system.time(slv<-slv(catch(bds[[2]]),
+                     c(params(bds[[2]])["r"]),
+                     c(params(bds[[2]])["k"]),
+                     c(params(bds[[2]])["b0"])))
+```
+
+```{r}
+system.time(cpp<-stockCPP(catch(bds[[2]]), 
+                      params(bds[[2]])[c("r","k","b0")]))
+```
+
+```{r}
+plot(rnr[["F"]])+
+  geom_line(aes(year,data),col="red",data=as.data.frame(H))+
+  geom_line(aes(year,data),col="red",data=as.data.frame(Fs[[1]]))+
+  geom_line(aes(year,data),col="blue",data=as.data.frame(cpp))
+```
+
+
+```{r}
+plot(rnr[["B"]])+
+  geom_line(aes(year,data),col="red",data=as.data.frame(B))+
+  geom_line(aes(year,data),col="blue",data=as.data.frame(cpp))
+```
+
+
+```{r}
+plot(mm1[["F"]])+
+  geom_line(aes(year,data),col="red",data=as.data.frame(F))
+```
+
+```{r}
+plot(mm1[["B"]])+
+  geom_line(aes(year,data),col="red",data=as.data.frame(B))
+plot(yield(mm1[["F"]],mm1[["B"]],r,K))+
+  geom_line(aes(year,data),col="red",data=as.data.frame(C))
+```
+
+
+```{r abn-imp-cf,eval=FALSE,fig.height=4,fig.width=8}
+i=c(1,2,4,5)[2] #Troll, CT, JLL, All
+# 1&5 OK, 2&4 bad
+
+bd  =as(asp[[i]],"biodyn")
+cpue=index(asp[[i]],FALSE)
+params(bd)[c("r")]=1.05*params(bd)[c("r")]
+params(bd)[c("k")]=1.0*params(bd)[c("k")]
+control(bd)[c("r"),c("phase","val")]=c(-1,params(bd)[c("r")])
+control(bd)[c("k"),c("phase","val")]=c(-1,params(bd)[c("k")])
+control(bd)[c("p"),"phase"]=-3
+
+bd1=fit(bd,cpue)
+plot(biodyns("ASPIC"=bd,"biodyn"=bd1))+
+  theme_bw()
+
+sum(asp[[2]]@diags[,"residual"]^2,na.rm=T)
+sum(bd1@diags[,"residual"]^2,na.rm=T)
+
+bd1@ll
+sum(-14.578, -26.373 ) 
+```
+
+**Figure 2** ASPIC runs
+
