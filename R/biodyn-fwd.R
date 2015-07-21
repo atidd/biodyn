@@ -46,15 +46,15 @@ prdFn=function(mdl,params,biomass=0) {
   genfit <- function(biomass, params)
     params['r']*biomass*(1-biomass/params['k'])
   
-  res <- switch(mdl,
-                fox     =fox(     biomass,params),
-                schaefer=schaefer(biomass,params),
-                gulland =gulland( biomass,params),
-                fletcher=fletcher(biomass,params),
-                pellat  =pellat(  biomass,params=params),
-                shepherd=shepherd(biomass,params),
-                genfit  =pellat(  biomass,params),
-                logistic=logistic(biomass,params))
+  res <- switch(substr(mdl,1,2),
+                fo=fox(     biomass,params),
+                sc=schaefer(biomass,params),
+                gu=gulland( biomass,params),
+                fl=fletcher(biomass,params),
+                pe=pellat(  biomass,params=params),
+                sh=shepherd(biomass,params),
+                ge=pellat(  biomass,params),
+                lo=logistic(biomass,params))
   
   return(res)}
 

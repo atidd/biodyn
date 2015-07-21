@@ -30,7 +30,7 @@ setMethod('biodyn', signature(),
       args = list(...)
 
       res=new("biodyn")
-      
+
       # Load given slots
       for(i in names(args))
         slot(res, i) = args[[i]]
@@ -38,15 +38,13 @@ setMethod('biodyn', signature(),
       if ("FLQuant"%in%is(catch))
         res@catch=catch
     
-
       if (!("params" %in% names(args))){
         res@params=rbind(FLPar(r =FLPar(r),
                                k =FLPar(k),
                                p =FLPar(p),
-                               b0=FLPar(b0)))
-      
-       }
-           
+                               b0=FLPar(b0)))  
+        }
+        
       res@control=propagate(res@control,dims(res@params)$iter)
       nms=dimnames(res@control)$param[dimnames(res@control)$param %in% dimnames(res@params)$param]
       res@control[nms,  'val']=res@params[nms,]

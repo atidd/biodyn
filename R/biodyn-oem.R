@@ -35,9 +35,12 @@ setMethod( 'sim',   signature(stock='missing',brp='missing'),
   if (!is.null(p))  params["p"] =p
   if (!is.null(b0)) params["b0"]=b0
   
+  nyr=dim(harvest)[2]
+  stock =FLQuant(rep(params['k'], nyr), dimnames=dimnames(harvest))
+  
   nyr <- dims(harvest)$year
   object = biodyn(model ='pellat',
-                  stock =FLQuant(rep(params['k'], nyr), dimnames=dimnames(harvest)),
+                  stock =stock,
                   params=params)
   
   object@control['r',     'val']=params['r']

@@ -114,7 +114,7 @@ bd =as(ple4,"biodyn")
 or aspic
 ```{rclassCoerce2,eval=FALSE}
 library(aspic)
-asp=aspic("http://http://rscloud.iccat.int/kobe/swon/2013/aspic/run2/")
+asp=aspic("http://rscloud.iccat.int/kobe/Inputs/swon/2013/aspic/run2/aspic.inp")
 bd =as(asp,"biodyn")
 ```
 
@@ -384,7 +384,7 @@ ggplot(subset(melt(prfl[,c("r","ll.u1","ll.u2","1")],id="r"),
 Profile Slot
 ```{rprflADMB,echo=FALSE,eval=FALSE}
 bd2=fit(bdHat,cpue,cmdOps="-lprof")
-prf=subset(bd@profile, param %in% c("bbmsy","ffmsy"))
+prf=subset(bd2@profile, param %in% c("bbmsy","ffmsy"))
 prf=data.frame(What="Profile",t(daply(prf, .(param), with, sample(value,500,prob=p,replace=T))))
 names(prf)[2:3]=c("Stock","Harvest")
 ```

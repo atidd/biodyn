@@ -10,14 +10,14 @@ double beta( double, double);
 double yield(double, double, double, double); 
 double stock(double, double, double, double, double );
 double gradY(double, double, double, double, double);
-double nr(double, double, double, double, double, double, int);
+double _nr(double, double, double, double, double, double, int);
 
 dvariable alpha(prevariable& r, prevariable& F);
 dvariable beta( prevariable& r, prevariable& K);
 dvariable yield(  prevariable& F,prevariable& B,prevariable& r,prevariable& K); 
 dvariable stock(prevariable& F, prevariable&  C, prevariable&  B, prevariable& r, prevariable& K);
 dvariable gradY(prevariable& F, prevariable&  C, prevariable& B, prevariable& r, prevariable& K);
-dvariable nr(prevariable& F, prevariable&  C, prevariable& B, prevariable& r, prevariable& K,double tolVal,int);
+dvariable _nr(prevariable& F, prevariable&  C, prevariable& B, prevariable& r, prevariable& K,double tolVal,int);
    
 inline dvariable alpha(dvariable r, dvariable F) {return(r-F);}
 inline dvariable beta( dvariable r, dvariable K) {return(r/K);}
@@ -33,7 +33,7 @@ dvariable gradY(dvariable F, dvariable C, dvariable B, dvariable r, dvariable K)
   dvariable expr1  = r/K;
   dvariable expr2  = F/expr1;
   dvariable expr3  = expr1*B;
-  dvariable expr4  = r-F;
+  dvariable expr4  = (r-F);//-sfabs(F-r); //r-F; 
   dvariable expr5  = exp(expr4);
   dvariable expr7  = expr3*(1-expr5);
   dvariable expr9  = 1-expr7/expr4;
@@ -43,11 +43,11 @@ dvariable gradY(dvariable F, dvariable C, dvariable B, dvariable r, dvariable K)
 
 dvariable nr(dvariable F, dvariable C, dvariable B, 
              dvariable r, dvariable K,
-             double tolVal=1e-10,int niter=200){
+             double tolVal=1e-10,int niter=20){
 
   dvariable val=1;
   int iters=0;
-  while ((val*val)>1e-20&&iters<niter)
+  while ((val*val)>1e-10&&iters<niter)
      {
      iters++;   
   
@@ -73,7 +73,7 @@ double gradY(double F, double C, double B, double r, double K){
   double expr1  = r/K;
   double expr2  = F/expr1;
   double expr3  = expr1*B;
-  double expr4  = r-F;
+  double expr4  = (r-F);
   double expr5  = exp(expr4);
   double expr7  = expr3*(1-expr5);
   double expr9  = 1-expr7/expr4;
@@ -82,13 +82,13 @@ double gradY(double F, double C, double B, double r, double K){
   return(-(1/expr1*expr10-expr2*((expr3*expr5/expr4+expr7/(expr4*expr4))/expr9)));}
 
 
-double nr(double F, double C, double B, 
-             double r, double K,
-             double tolVal=1e-10,int niter=200){
+double _nr(double F, double C, double B, 
+          double r, double K,
+          double tolVal=1e-10,int niter=20){
                
   double val=1;
   int iters=0;
-  while ((val*val)>1e-20&&iters<niter)
+  while ((val*val)>1e-10&&iters<niter)
      {
      iters++;   
   
@@ -114,7 +114,7 @@ dvariable gradY(prevariable& F, prevariable& C, prevariable& B, prevariable& r, 
   dvariable expr1  = r/K;
   dvariable expr2  = F/expr1;
   dvariable expr3  = expr1*B;
-  dvariable expr4  = r-F;
+  dvariable expr4  = (r-F);//-sfabs(F-r); //r-F; 
   dvariable expr5  = exp(expr4);
   dvariable expr7  = expr3*(1-expr5);
   dvariable expr9  = 1-expr7/expr4;
@@ -123,13 +123,13 @@ dvariable gradY(prevariable& F, prevariable& C, prevariable& B, prevariable& r, 
   return(-(1/expr1*expr10-expr2*((expr3*expr5/expr4+expr7/(expr4*expr4))/expr9)));}
   
   
-dvariable nr(prevariable& F, prevariable& C, prevariable& B, 
+dvariable _nr(prevariable& F, prevariable& C, prevariable& B, 
              prevariable& r, prevariable& K,
-             double tolVal=1e-10,int niter=200){
+             double tolVal=1e-10,int niter=20){
                 
   dvariable val=1;
   int iters=0;
-  while ((val*val)>1e-20&&iters<niter)
+  while ((val*val)>1e-10&&iters<niter)
      {
      iters++;   
      val = (C-yield(F,B,r,K))/(gradY(F,C,B,r,K));

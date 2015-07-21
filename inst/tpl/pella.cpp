@@ -1,6 +1,7 @@
   #include "admodel.h"
   #include <string>
   #include <dnorm.cpp> //include functions from custom library
+  #include <nr.cpp>    //include functions from custom library
   using std::string;
   const double pi = 3.141592654;
   int mcmc_iteration = 0;
@@ -12,6 +13,7 @@
   ofstream priors("prr.txt");
   ofstream bounds("bnd.txt");
   ofstream    lls("lls.txt");
+  
 #include <admodel.h>
 #include <contrib.h>
 
@@ -61,6 +63,8 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   fmsy_prior.allocate(1,4,"fmsy_prior");
   q_prior.allocate(1,4,"q_prior");
   s_prior.allocate(1,4,"s_prior");
+ change_datafile_name((adstring)run_name.c_str() + ".ref");
+  ref.allocate(1,4,"ref");
 }
 
 model_parameters::model_parameters(int sz,int argc,char * argv[]) : 
@@ -94,6 +98,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   cnow.allocate("cnow");
   bnow.allocate("bnow");
   fnow.allocate("fnow");
+  bthen.allocate("bthen");
+  fthen.allocate("fthen");
+  bnowthen.allocate("bnowthen");
+  fnowthen.allocate("fnowthen");
   msy.allocate("msy");
   bmsy.allocate("bmsy");
   fmsy.allocate("fmsy");
@@ -159,6 +167,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     B.initialize();
   #endif
+  F.allocate(1,nc,"F");
+  #ifndef NO_AD_INITIALIZE
+    F.initialize();
+  #endif
   Bfit.allocate(1,ni,"Bfit");
   #ifndef NO_AD_INITIALIZE
     Bfit.initialize();
@@ -171,12 +183,16 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     RSS.initialize();
   #endif
-  summary.allocate(1,nc,1,7,"summary");
+  summary.allocate(1,nc,1,8,"summary");
   #ifndef NO_AD_INITIALIZE
     summary.initialize();
   #endif
   lpbnow.allocate("lpbnow");
   lpfnow.allocate("lpfnow");
+  lpbthen.allocate("lpbthen");
+  lpfthen.allocate("lpfthen");
+  lpbnowthen.allocate("lpbnowthen");
+  lpfnowthen.allocate("lpfnowthen");
   lpmsy.allocate("lpmsy");
   lpbmsy.allocate("lpbmsy");
   lpfmsy.allocate("lpfmsy");
@@ -200,8 +216,8 @@ void model_parameters::preliminary_calculations(void)
 {
 
   admaster_slave_variable_interface(*this);
+  
   halfnlog2pi = 0.5*ni*log(2*pi);
-  nReg=5;
   stepN =50;
   stepSz=0.05;
   // Data
@@ -219,6 +235,8 @@ void model_parameters::preliminary_calculations(void)
   _k    = _k_plui[4];
   _a    = _a_plui[4];
   _p    = _p_plui[4];
+  for(int i=1; i<=nc; i++) F[i]=_r*0.2;
+ 
   for (int j=1; j<=nIdx; j++){
     // change from log
     //logq(j) = qPr[j];
@@ -229,6 +247,10 @@ void model_parameters::preliminary_calculations(void)
   // likelihood profile 
   lpbnow  =bnow;
   lpfnow  =fnow;
+  lpbnow  =bthen;
+  lpfnow  =fthen;
+  lpbnow  =bnowthen;
+  lpfnow  =fnowthen;
   if (1!=2){
   lpmsy   =msy;
   lpbmsy  =bmsy;
@@ -247,6 +269,14 @@ void model_parameters::preliminary_calculations(void)
   }
   lpbnow.set_stepnumber(stepN);
   lpbnow.set_stepsize(stepSz);
+  lpfnow.set_stepnumber(stepN);
+  lpfnow.set_stepsize(stepSz);
+  lpbthen.set_stepnumber(stepN);
+  lpbthen.set_stepsize(stepSz);
+  lpfnowthen.set_stepnumber(stepN);
+  lpfnowthen.set_stepsize(stepSz);
+  lpbnowthen.set_stepnumber(stepN);
+  lpbnowthen.set_stepsize(stepSz);
   lpfnow.set_stepnumber(stepN);
   lpfnow.set_stepsize(stepSz);
   if (1!=2){
@@ -292,6 +322,10 @@ void model_parameters::userfunction(void)
   // likelihood profile 
   lpbnow  =bnow;
   lpfnow  =fnow;
+  lpbthen =bthen;
+  lpfthen =fthen;
+  lpbnowthen  =bnowthen;
+  lpfnowthen  =fnowthen;
   if (1!=2){
   lpmsy   =msy;
   lpbmsy  =bmsy;
@@ -334,7 +368,7 @@ void model_parameters::report()
         <<"# neglogL"<<endl<<neglogL<<endl<<endl;
   report<<setprecision(12)
         <<"# Model summary"<<endl
-        <<" year stock catch index hat stockHat stock."<<endl
+        <<" year stock catch index hat stockHat stock F."<<endl
         <<summary<<endl;
  write_ll();
 }
@@ -354,8 +388,15 @@ void model_parameters::get_fit(void)
     s[j]   = _s[j];
     }
   B[1] = k*a;
-  for(int t=1; t<=nc; t++)
-    B[t+1] = sfabs(B[t] + r/p*B[t]*(1-pow(B[t]/k,p)) - C[t]);
+  for(int t=1; t<=nc; t++){
+    if (_p_plui[1]<-1){
+    {    
+       F[t]=nr(-log(1-C[t]/B[t])*.5, C[t], B[t], r, k);
+       dvariable alpha=sfabs(r-F[t]);//-sfabs(F[t]-r));
+       B[t+1]=((r-F[t]))*B[t]*exp((alpha))/(alpha+(r/k)*B[t]*(exp(alpha)-1));}
+       }else
+       B[t+1]=sfabs(B[t]-C[t])+r/p*B[t]*(1-pow(B[t]/k,p));
+       }
   // constricted likelihood
   bool flag=false;
   //initialise
@@ -387,8 +428,12 @@ void model_parameters::get_fit(void)
   cnow =C[nc];
   fnow =C[nc]/B[nc];
   bnow =B[nc];
+  fthen =C[nc-ref[4]+1]/B[nc-ref[4]+1];
+  bthen =B[nc-ref[4]+1];
+  fnowthen  =fnow/fthen;
+  bnowthen =bnow/bthen;
   msy  =r*k*pow(1/(1+p),1/p+1);
-  bmsy =(k*pow((1/(1+p)),(1/p)));
+  bmsy =k*pow((1/(1+p)),(1/p));
   fmsy =msy/bmsy;
   cmsy =C[nc]	/msy;
   bbmsy=bnow/bmsy;
@@ -399,11 +444,11 @@ void model_parameters::get_fit(void)
    fratio=0.0;
   _bratio=0.0;
   _fratio=0.0;
-  for (int i=nc; i>nc-3; i--){
+  for (int i=nc; i>nc-ref[2]; i--){
     bratio+=B[i];
     fratio+=C[i]/B[i];
-    _bratio+=B[i-3];
-    _fratio+=C[i-3]/B[i-3];
+    _bratio+=B[i-ref[3]];
+    _fratio+=C[i-ref[3]]/B[i-ref[3]];
     }
  bratio=bratio/_bratio;
  fratio=fratio/_fratio;
@@ -411,24 +456,24 @@ void model_parameters::get_fit(void)
   x =0.0;
    y=0.0; 
   xx=0.0; 
-  for (int i=nc; i>nc-nReg; i--){
+  for (int i=nc; i>nc-ref[1]; i--){
     x +=i;
     xx+=i*i;  
     y +=B[i];  
     xy+=i*B[i];  
     }
-  slopeb = (nReg*xy - x*y)/(nReg*xx - x*2.0);
+  slopeb = -(ref[1]*xy - x*y)/(ref[1]*xx - x*x);
   xy=0.0; 
   x =0.0;
    y=0.0; 
   xx=0.0; 
-  for (int i=nc; i>nc-nReg; i--){
+  for (int i=nc; i>nc-ref[1]; i--){
     x +=i;
     xx+=i*i;  
     y +=C[i]/B[i];  
     xy+=i*C[i]/B[i];  
     }
-  slopef = (nReg*xy - x*y)/(nReg*xx - x*2.0);
+  slopef = -(ref[1]*xy - x*y)/(ref[1]*xx - x*x);
 }
 
 void model_parameters::get_neglogL(void)
@@ -448,11 +493,31 @@ void model_parameters::get_neglogL(void)
   dvariable _fmsy =msy/bmsy;
   if (r_prior[1]>0)    neglogL += r_prior[1]*dnorm(r, r_prior[2], r_prior[3]); // /dnorm(r_prior[2], r_prior[2], r_prior[3]);
   if (k_prior[1]>0)    neglogL += k_prior[1]*dnorm(k, k_prior[2], k_prior[3]); // /dnorm(k_prior[2], k_prior[2], k_prior[3]);
-  if (p_prior[1]>0)    neglogL += p_prior[1]*dnorm(p, p_prior[2], p_prior[ 3]); // /dnorm(p_prior[2], p_prior[2], p_prior[3]);
+  if (p_prior[1]>0)    neglogL += p_prior[1]*dnorm(p, p_prior[2], p_prior[3]); // /dnorm(p_prior[2], p_prior[2], p_prior[3]);
   if (a_prior[1]>0)    neglogL += a_prior[1]*dnorm(a, a_prior[2], a_prior[3]); // /dnorm(a_prior[2], a_prior[2], a_prior[3]);
   if ( msy_prior[1]>0) neglogL += msy_prior[1]*dnorm(_msy,  msy_prior[2],  msy_prior[3]); // /dnorm( msy_prior[2],  msy_prior[2],  msy_prior[3]);
   if (bmsy_prior[1]>0) neglogL += bmsy_prior[1]*dnorm(_bmsy, bmsy_prior[2], bmsy_prior[3]); // /dnorm(bmsy_prior[2], bmsy_prior[2], bmsy_prior[3]);
-  if (fmsy_prior[1]>0) neglogL += fmsy_prior[1]*dnorm(_fmsy, fmsy_prior[2], fmsy_prior[3]); // /dnorm(fmsy_prior[2], fmsy_prior[2], fmsy_prior[3]);
+  if (fmsy_prior[1]==1)  neglogL += fmsy_prior[1]*dnorm(_fmsy, fmsy_prior[2], fmsy_prior[3]); // /dnorm(fmsy_prior[2], fmsy_prior[2], fmsy_prior[3]);
+  if ( msy_prior[1]==10) {
+      double a=value(C[(int)msy_prior[2]]/B[(int)  msy_prior[2]]);
+      neglogL +=  msy_prior[1]*dnorm(_msy,a,a*msy_prior[2]); 
+      }
+  if (fmsy_prior[1]==10) {
+      double a=value(C[(int)msy_prior[2]]/B[(int)  fmsy_prior[2]]);
+      neglogL +=  fmsy_prior[1]*dnorm(_fmsy,a,a*fmsy_prior[2]); 
+      }
+  if (bmsy_prior[1]==10) {
+      double a=value(C[(int)bmsy_prior[2]]/B[(int)  bmsy_prior[2]]);
+      neglogL += bmsy_prior[1]*dnorm(_bmsy,a,a*bmsy_prior[2]); 
+      }
+  if(_p_plui[1]<-10){
+     for (int t=1; t<=nc; t++){
+       dvariable alpha=sfabs(r-F[t]);//-sfabs(F[t]-r);
+       neglogL += (2*.1*.1)*(log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((alpha)))/(alpha)))))*(log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((alpha)))/(alpha)))));}}
+  //if (bmsy_prior[1]==10) neglogL += bmsy_prior[1]*dnorm(_bmsy, C[(int)bmsy_prior[2]]/B[(int)bmsy_prior[2]], 
+  //                                                             C[(int)bmsy_prior[2]]/B[(int)bmsy_prior[2]]*bmsy_prior[3]); 
+  //if (fmsy_prior[1]==10) neglogL += fmsy_prior[1]*dnorm(_fmsy, C[(int)fmsy_prior[2]]/B[(int)fmsy_prior[2]], 
+  //                                                             C[(int)fmsy_prior[2]]/B[(int)fmsy_prior[2]]*fmsy_prior[3]); 
  //for (i=1; i<=nIdx; i++){
   //  if (q_prior[i]>0) neglogL += q_prior[1]*dnorm(q, q_prior[2], q_prior[3]); // /dnorm(q_prior[2], q_prior[2], q_prior[3]);
   //  if (s_prior[i]>0) neglogL += s_prior[1]*dnorm(s, s_prior[2], s_prior[3]); // /dnorm(s_prior[2], s_prior[2], s_prior[3]);}
@@ -463,6 +528,7 @@ void model_parameters::get_summary(void)
   summary.colfill(1,(dvector)Cyear);
   summary.colfill(2,B);
   summary.colfill(3,C);
+  summary.colfill(8,F);
   for(int i=1; i<=ni; i++)  // allow missing years in abundance index
     {
     summary(X[i],4) = I[i];
@@ -549,6 +615,7 @@ int main(int argc,char * argv[])
   gradient_structure::set_GRADSTACK_BUFFER_SIZE(3000000);
   gradient_structure::set_CMPDIF_BUFFER_SIZE(200000);
   gradient_structure::set_MAX_NVAR_OFFSET(10000);
+  gradient_structure::set_MAX_DLINKS(100000);
     gradient_structure::set_NO_DERIVATIVES();
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;

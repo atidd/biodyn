@@ -165,12 +165,12 @@ i=c(1,2,4,5)[2] #Troll, CT, JLL, All
 bd  =as(asp[[i]],"biodyn")
 cpue=index(asp[[i]],FALSE)
 params(bd)[c("r")]=1.05*params(bd)[c("r")]
-params(bd)[c("k")]=1.0*params(bd)[c("k")]
-control(bd)[c("r"),c("phase","val")]=c(-1,params(bd)[c("r")])
-control(bd)[c("k"),c("phase","val")]=c(-1,params(bd)[c("k")])
-control(bd)[c("p"),"phase"]=-3
+params(bd)[c("k")]=1*params(bd)[c("k")]
+control(bd)[c("r"),c("phase","val")]=c(1,params(bd)[c("r")])
+control(bd)[c("k"),c("phase","val")]=c(1,params(bd)[c("k")])
+control(bd)[c("p"),"phase"]=-1
 
-bd1=fit(bd,cpue)
+bd1=fit(bd,cpue,cmdOps="-iprint 1")
 plot(biodyns("ASPIC"=bd,"biodyn"=bd1))+
   theme_bw()
 

@@ -235,7 +235,6 @@ PRELIMINARY_CALCS_SECTION
 
 
   for(int i=1; i<=nc; i++) F[i]=_r*0.2;
-
  
   for (int j=1; j<=nIdx; j++){
     // change from log
@@ -404,9 +403,19 @@ FUNCTION get_fit
   B[1] = k*a;
   for(int t=1; t<=nc; t++){
     if (_p_plui[1]<-1){
+
+//    if (r-F[t]) {
+//       F[t]=(r/k)*C[t]/(log(1+r/k*B[t]));
+//       B[t+1]=B[t]/(1+r/k*B[t]);
+//    }else
+    {    
        F[t]=nr(-log(1-C[t]/B[t])*.5, C[t], B[t], r, k);
 
-       B[t+1]=(r-F[t])*B[t]*exp(r-F[t])/(r-F[t]+(r/k)*B[t]*(exp(r-F[t])-1));
+//(r-F[t])
+//(sfabs(r-F[t])-sfabs(F[t]-r))
+       dvariable alpha=sfabs(r-F[t]);//-sfabs(F[t]-r));
+
+       B[t+1]=((r-F[t]))*B[t]*exp((alpha))/(alpha+(r/k)*B[t]*(exp(alpha)-1));}
 
        }else
        B[t+1]=sfabs(B[t]-C[t])+r/p*B[t]*(1-pow(B[t]/k,p));
@@ -549,10 +558,11 @@ FUNCTION get_neglogL
       neglogL += bmsy_prior[1]*dnorm(_bmsy,a,a*bmsy_prior[2]); 
       }
 
-  if(_p_plui[1]<-1){
-     for (int t=1; t<=nc; t++)
-       neglogL += (2*.1*.1)*(log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((r-F[t])))/(r-F[t])))))*
-                                    (log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((r-F[t])))/(r-F[t])))));}
+  if(_p_plui[1]<-10){
+     for (int t=1; t<=nc; t++){
+       dvariable alpha=sfabs(r-F[t]);//-sfabs(F[t]-r);
+     
+       neglogL += (2*.1*.1)*(log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((alpha)))/(alpha)))))*(log(C[t])-log((F[t]/(r/k)*log(1-(r/k)*B[t]*(1-exp((alpha)))/(alpha)))));}}
    
   //if (bmsy_prior[1]==10) neglogL += bmsy_prior[1]*dnorm(_bmsy, C[(int)bmsy_prior[2]]/B[(int)bmsy_prior[2]], 
   //                                                             C[(int)bmsy_prior[2]]/B[(int)bmsy_prior[2]]*bmsy_prior[3]); 

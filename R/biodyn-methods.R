@@ -52,7 +52,7 @@ setMethod( 'computePrd', signature(object='biodyn',   biomass='FLQuant'),     fu
 
 # calcLogLik
 
-calcSigma <- function(obs,hat=rep(0,length(obs)),error='log'){
+calcSigma <- function(obs,hat=rep(1,length(obs)),error='log'){
   yrs=dimnames(obs)$year
   yrs=yrs[yrs %in% dimnames(hat)$year]
   hat=hat[,yrs]
