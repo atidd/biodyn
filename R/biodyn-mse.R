@@ -111,7 +111,7 @@ mseBiodyn<-function(om,eql,srDev,
     TAC[]=rep(apply(TAC,6,mean)[drop=T],each=interval)
     
     #### Operating Model Projectionfor TAC
-    om =FLash:::fwd(om,catch=TAC,maxF=maxF,sr=eql,sr.residuals=srDev)  
+    om =FLash::fwd(om,catch=TAC,maxF=maxF,sr=eql,sr.residuals=srDev)  
 
     #### Summary Statistics
     ## HCR actions, i.e. is biomass<Btrig?, what is F?, ..
@@ -227,7 +227,7 @@ demoBiodyn<-function(om,mp,
     TAC[]=rep(apply(TAC,6,mean)[drop=T],each=interval)
     
     #### Operating Model Projectionfor TAC
-    om =FLash:::fwd(om,catch=TAC,maxF=maxF,sr=eql,sr.residuals=srDev)  
+    om =FLash::fwd(om,catch=TAC,maxF=maxF,sr=eql,sr.residuals=srDev)  
     
     #### Summary Statistics
     ## HCR actions, i.e. is biomass<Btrig?, what is F?, ..

@@ -2,8 +2,8 @@
 % Please edit documentation in R/biodyn-boot.R
 \name{boot}
 \alias{boot}
+\alias{boot,biodyn-method}
 \alias{boot-method}
-\alias{boot-method,biodyn}
 \title{boot, Bootstraps biodyn.}
 \usage{
 boot(object, ...)

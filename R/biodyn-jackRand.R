@@ -15,10 +15,7 @@
 #' @export
 #' @rdname randJack
 #'
-#' @aliases randJack-method randJack,numeric,biodyn-method
-#' randJack, numeric,FLPar,FLPar-method
-#' randJack, numeric,FLQuant,FLQuant-method
-#' randJack,numeric,biodyn,biodyn-method
+#' @aliases randJack-method randJack,numeric,biodyn-method randJack, numeric,FLPar,FLPar-method randJack, numeric,FLQuant,FLQuant-method randJack, numeric,biodyn,biodyn-method
 #'
 #' @examples
 #' \dontrun{

@@ -11,7 +11,7 @@ guessK=function(r,catch,p=1,ratio=0.5)
 #' 
 #' @return biodyn object
 #' 
-#' @aliases biodyn-method biodyn,ANY-method 
+#' @aliases biodyn-method biodyn,ANY-method  biodyn,ANY,ANY-method biodyn,FLBRP,FLStock-method
 #' 
 #' @export
 #' @examples 

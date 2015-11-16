@@ -90,7 +90,7 @@ setMethod('profile', signature(fitted='biodyn'),
         f=fitted
         f@catch=propagate(f@catch,dim(f@control)[3])
         res=fit(f,index)
-        res@catch=FLCore:::iter(res@catch,1)
+        res@catch=FLCore::iter(res@catch,1)
         rtn=fn(res)
 
         

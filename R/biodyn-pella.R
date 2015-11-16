@@ -405,7 +405,7 @@ print(1)
        #close(x)}
        
        if (file.exists(paste(dir,'pella.hst',sep='/')))
-          bd@hst=biodyn:::admbProfile(paste(dir,'pella.hst',sep='/'))$profile
+          bd@hst=biodyn::admbProfile(paste(dir,'pella.hst',sep='/'))$profile
        if (file.exists(paste(dir,'lpr.plt',sep='/')))
           bd@profile=mdply(data.frame(var=c("r", "k","bnow","fnow",
                                             "bnow","fnow","bnowthen","fnowthen",
@@ -416,7 +416,7 @@ print(1)
                                     #print(var)
                                     fl=paste("lp",var,".plt",sep="")
                                     if (file.exists(fl))
-                                      biodyn:::admbPlt(fl)})
+                                      biodyn::admbPlt(fl)})
        }
 
      bd@params@.Data[  ,i] = object[[1]]@params
@@ -645,7 +645,7 @@ calcSS=function(x) daply(x@diags, .(name),
 
 fitFn=function(file){
 
-  res=biodyn:::admbFit(file)
+  res=biodyn::admbFit(file)
 
   #est        
   hat =FLPar(array(c(res$est),dim     =c(length(res$names),1),

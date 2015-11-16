@@ -6,7 +6,7 @@
 #' @param object; a \code{biodyn} object 
 #' @seealso \code{\link{biodyn},\link{boot},\link{jk}}
 #' 
-#' @aliases boot-method boot-method,biodyn
+#' @aliases boot-method boot,biodyn-method
 #' 
 #' @export
 #' 

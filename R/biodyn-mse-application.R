@@ -46,7 +46,7 @@ runMSE=function(om,eql,mp,
   nits=dims(srDev)$iter
   
   ## F in longterm
-  lgt=FLQuant(c(FLBRP:::refpts(eql)['msy','harvest']*hcr['ftar']),
+  lgt=FLQuant(c(FLBRP::refpts(eql)['msy','harvest']*hcr['ftar']),
                          dimnames=list(year=range["min"]:range["max"],iter=seq(nits)))
   
   ## Add stochastcity
