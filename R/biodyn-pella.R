@@ -280,14 +280,19 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
                   set=setPella,
                   get=getPella,cmdOps=paste('-maxfn 500 -iprint 0'))          
   {
-  first=TRUE          
-
+  first=TRUE   
+  
   catch=NULL
   if (dims(object)$iter==1 &  1<ifelse(is(index)[1]=='FLQuant',dims(index)$iter>1,max(laply(index,function(x) dims(x)$iter))))
      {
      catch=catch(object)
-     catch(object)=propagate(catch(object),dims(index)$iter)
-     }
+
+    if ("FLQuants"%in% is(index))
+      its=max(laply(u,function(x) dims(x)$iter))
+    else
+      its=dims(index)$iter
+     catch(object)=propagate(catch(object),its)   
+    }
 
   max=min(dims(catch(object))$maxyear,ifelse(is(index)[1]=='FLQuant',dims(index)$maxyear,max(laply(index,function(x) dims(x)$maxyear))))
   if (!is.na(range(object)['maxyear'])) max=min(max,range(object)['maxyear']) 
@@ -298,8 +303,8 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
   if ('FLQuant' %in% is(index)){ 
     index =window(index,start=min,end=max)
   }else if ('FLQuants' %in% is(index)){
-    index =FLQuants(llply(index, window,start=min,end=max))}
-  
+    index=FLQuants(llply(index, window,start=min,end=max))}
+  print(2)  
   slts=getSlots('biodyn')
   slts=slts[slts %in% c('FLPar','FLQuant')]
 
@@ -323,7 +328,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
    
   us=paste('u',seq(length(dimnames(params(bd))$params[grep('q',dimnames(params(bd))$params)])),sep='')
   bd@ll=FLPar(NA,dimnames=list(params=us,iter=seq(1)))
-
+print(1)
   if (its>1){
    
       ## these are all results, so doesnt loose anything
@@ -500,9 +505,10 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
         diagsFn(res)})}
 
   setwd(oldwd)
-  
-  if (!is.null(catch)) catch(object)=catch
-  
+
+#  if (!is.null(catch)) catch(object)=catch
+
+
   return(bd)}
             
 #library(matrixcalc)

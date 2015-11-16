@@ -9,7 +9,7 @@ output: rmarkdown::tufte_handout
 %% \VignetteEngine{knitr::knitr}
 -->
 
-```{rinitKnitr, echo=FALSE, results="asis"}
+```{r initKnitr, echo=FALSE, results="asis"}
 library(knitr)
 
 #output: rmarkdown::tufte_handout

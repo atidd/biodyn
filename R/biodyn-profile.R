@@ -93,14 +93,17 @@ setMethod('profile', signature(fitted='biodyn'),
         res@catch=FLCore:::iter(res@catch,1)
         rtn=fn(res)
 
+        
         if (comp){
-          dgs=fitted@diags[,c(".id","year","residual")]
-          #rtn=transform(rtn,name=nms[.id])
+          rsd=mdply(data.frame(iter=seq(dims(f)$iter)), 
+                    function(iter){
+                      ft =fit(iter(fitted,iter),index)
+                      dgs=ft@diags[,c(".id","year","residual")]
+                      names(dgs)=c("name","year","residual")
+                      
+                      dgs})
           
-          names(dgs)=c("name","year","residual")
-          
-          return(list(profile=rtn,diags=dgs))
-          }
+          return(list(comp=rtn,residuals=rsd))}
         
         return(rtn)})
 
