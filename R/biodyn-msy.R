@@ -1,6 +1,8 @@
 utils::globalVariables(c('refJacobian'))
 utils::globalVariables(c('jacobian', 'swon'))
 utils::globalVariables(c('data.x','data.y','X..x'))
+globalVariables("paramas")
+
 
 #' msy
 #'

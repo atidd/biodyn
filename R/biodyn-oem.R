@@ -1,4 +1,11 @@
 ## Observation Error Model
+globalVariables("ctrl")
+globalVariables("prrs")
+globalVariables("cpue")
+globalVariables("phaseQ")
+globalVariables("bounds")
+globalVariables("uCV")
+
 
 #' sim
 #'
@@ -16,7 +23,10 @@
 #' 
 #' @return biodyn object with simulated time series
 #' 
+#' @aliases sim-method sim,FLStock,ANY-method sim,missing,missing-method 
+#' 
 #' @export
+#' 
 #' @examples
 #' \dontrun{
 #'  bd=sim() 

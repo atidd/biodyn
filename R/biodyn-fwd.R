@@ -6,6 +6,7 @@
 # $Id:  $
 
 utils::globalVariables('finite')
+globalVariables("ctrl")
 
 prdFn=function(mdl,params,biomass=0) {
   if (!is.FLQuant(biomass)) biomass=FLQuant(biomass)  

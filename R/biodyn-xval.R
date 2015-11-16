@@ -28,6 +28,8 @@ xvalFn=function(object,index,minyear,maxyear=range(object)["maxyear"]){
 #' @param   minyear last year to fit data to
 #' @param   maxyear last year to project to, by default is the last year in the catch
 #'
+#' @aliases xval-method xval,biodyn-method
+#'
 #' @export
 #' @rdname xval
 #'

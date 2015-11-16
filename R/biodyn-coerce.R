@@ -1,3 +1,5 @@
+globalVariables("ctrl")
+
 #' as("biodyn", "FLStock")
 #'
 #' @description

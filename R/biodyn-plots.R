@@ -11,6 +11,7 @@ utils::globalVariables(c('geom_path','scale_size_manual','scale_linetype_manual'
 
 utils::globalVariables(c('qname','What'))
 
+globalVariables(c("ymax","ymin","CI","50%","ymax","ymin","CI"))
 
 whooow  =function(x,fn,probs)
   as.data.frame(FLQuants(lapply(fn,

@@ -5,7 +5,11 @@
 #'
 #' @param object; a \code{biodyn} object 
 #' @seealso \code{\link{biodyn},\link{boot},\link{jk}}
+#' 
+#' @aliases boot-method boot-method,biodyn
+#' 
 #' @export
+#' 
 #' @rdname boot
 #' @examples
 #' \dontrun{

@@ -10,6 +10,8 @@
 #' 
 #' @return \code{biodyn} with estimates of stock based on catch time series
 #' 
+#' @aliases randJack-method randJack,numeric,FLPar,FLPar-method randJack,numeric,FLQuant,FLQuant-method 
+#' 
 #' @export
 #' @rdname randJack
 #'

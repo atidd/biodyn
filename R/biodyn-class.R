@@ -42,6 +42,8 @@ validity<-function(object) {
 #' 
 #' All slots in the class have accessor and replacement methods that provide validation and protection of their data.
 #' 
+#' @aliases biodyn-method biodyn,ANY,ANY-method biodyn,FLBRP,FLStock-method 
+#' 
 #' @export
 #' 
 #' @importFrom plyr ddply ldply laply mdply maply alply .

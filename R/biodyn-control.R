@@ -1,4 +1,5 @@
 utils::globalVariables(c('ldply','melt','variable'))
+globalVariables("lambda")
 
 #if (!isGeneric('control'))    
   setGeneric('control',     function(object,method,...) standardGeneric('control'))
@@ -16,8 +17,7 @@ utils::globalVariables(c('ldply','melt','variable'))
 #' @export
 #' @rdname setParams
 #' 
-#' @aliases setParams<-,biodyn,FLPar-method  setParams<-,biodyn,FLQuant-method setParams<-,biodyn,FLQuants-method  setParams<-,biodyn,data.frame-method
-#' 
+#' @aliases setParams<-,biodyn,FLPar-method  setParams<-,biodyn,FLQuant-method setParams<-,biodyn,FLQuants-method  setParams<-,biodyn,data.frame-method setParams<-  setParams<-,biodyn,FLBRP-method 
 #' @examples
 #' \dontrun{
 #' bd=sim()
@@ -285,7 +285,7 @@ setMethod('control', signature(object='biodyn'), function(object) {
 #' @param max \code{numeric} a multipler for the best guess
 #'
 #' @return a \code{control} object
-#'  
+#'   
 #' @export
 #' @rdname controlFn
 #' 
