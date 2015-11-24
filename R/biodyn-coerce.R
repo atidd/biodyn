@@ -85,6 +85,4 @@ setMethod('biodyn', signature(model='FLStock',params='missing'),
 
 setGeneric('as.biodyn',   function(x,...)     standardGeneric('as.biodyn'))
 setMethod('as.biodyn',signature(x='FLStock'),function(x){FLStock2biodyn(x)})
-
-
-          
+       

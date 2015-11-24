@@ -1,3 +1,19 @@
+# %+% is in ggplot2, but export as a function, so our method steps on it
+# 
+# "+.gg" <- function(e1, e2) {
+#   # Get the name of what was passed in as e2, and pass along so that it
+#   # can be displayed in error messages
+#   e2name <- deparse(substitute(e2))
+#   
+#   if      (is.theme(e1))  add_theme(e1, e2, e2name)
+#   else if (is.ggplot(e1)) add_ggplot(e1, e2, e2name)
+# }
+# 
+# 
+# #' @rdname gg-add
+# #' @export
+# "%+%" <- `+.gg`
+
 setMethod('harvest', signature(object='biodyn'),
              function(object,when=.5,...) {
              
