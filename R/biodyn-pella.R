@@ -304,7 +304,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
     index =window(index,start=min,end=max)
   }else if ('FLQuants' %in% is(index)){
     index=FLQuants(llply(index, window,start=min,end=max))}
-  print(2)  
+  
   slts=getSlots('biodyn')
   slts=slts[slts %in% c('FLPar','FLQuant')]
 
@@ -328,7 +328,7 @@ fitPella=function(object,index=index,exeNm='pella',package='biodyn',
    
   us=paste('u',seq(length(dimnames(params(bd))$params[grep('q',dimnames(params(bd))$params)])),sep='')
   bd@ll=FLPar(NA,dimnames=list(params=us,iter=seq(1)))
-print(1)
+
   if (its>1){
    
       ## these are all results, so doesnt loose anything

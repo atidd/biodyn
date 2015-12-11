@@ -43,7 +43,8 @@ mseBiodyn<-function(om,eql,srDev,
                     what  ="msy",
                     mult  =TRUE,
                     bndF  =NULL,
-                    maxF    =1.0,     
+                    bndTac=NULL,
+                    maxF  =1.0,     
                     phaseQ=1,
                     cmdOps=paste('-maxfn 500 -iprint 0 -est'),
                     omega =1,
@@ -64,7 +65,7 @@ mseBiodyn<-function(om,eql,srDev,
    
   #### Observation Error (OEM) setup #######################
   ## Random variation for CPUE  
-  cpue=oem(window(om,end=start),uDev)
+  cpue=oem(window(om,end=start),cv=uDev,fishDepend=TRUE)
   cpue=cpue*trendQ[,dimnames(cpue)$year]
   
   ## Loop round years
@@ -76,7 +77,7 @@ mseBiodyn<-function(om,eql,srDev,
     
     ## use data from last year
     cpue=window(cpue,end=iYr-1)
-    cpue[,ac(iYr-(interval:1))]=oem(om[,ac(iYr-(interval:1))],uDev)
+    cpue[,ac(iYr-(interval:1))]=oem(om[,ac(iYr-(interval:1))],uDev,fishDepend=TRUE)
     cpue[,ac(iYr-(interval:1))]=cpue[,ac(iYr-(interval:1))]*trendQ[,ac(iYr-(interval:1))]
     
     #### Management Procedure
@@ -91,7 +92,7 @@ mseBiodyn<-function(om,eql,srDev,
     bd@control[dimnames(control)$params,'phase'][]=control[dimnames(control)$params,'phase']
     bd@control['q1','phase']=phaseQ
     bd@control['q1','val']  =1
-
+    
     ## fit
     bd =biodyn::fit(bd,cpue,cmdOps=cmdOps)
     bd =biodyn::fwd(bd,catch=catch(om)[,ac(iYr)])
@@ -103,7 +104,8 @@ mseBiodyn<-function(om,eql,srDev,
                      blim =blim *bmsy(bd))
     hcrOutcome=biodyn::hcr(bd,hcrPar,
                    hcrYrs=iYr+seq(interval),
-                   bndF=bndF,
+                   bndF  =bndF,
+                   bndTac=bndTac,
                    tac =TRUE)
             
     ## TACs for next year (iYtr+1) for n=interval years
@@ -182,7 +184,7 @@ demoBiodyn<-function(om,mp,
   
   #### Observation Error (OEM) setup #######################
   ## Random variation for CPUE  
-  cpue=oem(window(om,end=start),uDev)
+  cpue=oem(window(om,end=start),uDev,fishDepend=TRUE)
   
   ## Loop round years
   mp =NULL
@@ -193,7 +195,7 @@ demoBiodyn<-function(om,mp,
     
     ## use data from last year
     cpue=window(cpue,end=iYr-1)
-    cpue[,ac(iYr-(interval:1))]=oem(om[,ac(iYr-(interval:1))],uDev)
+    cpue[,ac(iYr-(interval:1))]=oem(om[,ac(iYr-(interval:1))],uDev,fishDepend=TRUE)
     
     #### Management Procedure
     ## Set up assessment parameter options
@@ -279,7 +281,7 @@ demo<-function(om,mp,pe,
   
   #### Observation Error (OEM) setup #######################
   ## Random variation for CPUE  
-  cpue=oem(window(om,end=start),uDev)
+  cpue=oem(window(om,end=start),uDev,fishDepend=TRUE)
   setParams( mp)=cpue  
   setControl(mp)=params(mp)  
   
@@ -295,7 +297,7 @@ demo<-function(om,mp,pe,
     
     ## use data from last year
     cpue=window(cpue,end=iYr-1)
-    cpue[,ac(iYr-(interval:1))]     =oem(om[,ac(iYr-(interval:0))],uDev)
+    cpue[,ac(iYr-(interval:1))] =oem(om[,ac(iYr-(interval:0))],uDev,fishDepend=TRUE)
     mp=window(mp,end=iYr-1)
     catch(mp)=catch(om)
     #### Management Procedure

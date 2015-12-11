@@ -116,13 +116,17 @@ setMethod( 'oem',   signature(om='FLStock'),
            function(om,cv=0.3,fishDepend=FALSE){
   
   nits=max(dims(stock(om))$iter,dims(catch(om))$iter)
-  rnd=rlnorm(nits,FLQuant(0,dimnames=list(year=dims(om)$minyear:dims(om)$maxyear)),cv)
   
+  if ("numeric"%in%is(cv))
+    cv=rlnorm(nits,FLQuant(0,dimnames=list(year=dims(om)$minyear:dims(om)$maxyear)),cv)
+  
+  yrs=dimnames(m(om))$year
+  yrs=yrs[yrs%in%dimnames(cv)$year]
   if (fishDepend) 
-    cpue=rnd*catch(om)/fbar(om)
+    cpue=cv[,yrs]%*%catch(om)[,yrs]%/%fbar(om)[,yrs]
   else 
-    cpue=rnd*computeStock(om)
-  
+    cpue=cv[,yrs]%*%computeStock(om)[,yrs]
+
   cpue})
 
 #setMethod('survey', signature(object='FLStock'),

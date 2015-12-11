@@ -220,7 +220,7 @@ setQ=function(object,value,error='log'){
     names(res)[1]='name'
 
   res=res[!is.na(res$name),]
-  res=ddply(res, .(name,iter), function(x,log) data.frame(calcQ(x$stock,x$value)),log='log')
+  res=ddply(res, .(name,iter), function(x,log) data.frame(biodyn:::calcQ(x$stock,x$value)),log='log')
   its=max(as.numeric(ac(res$iter)))
 
   res.=transform(melt(res,id=c('name','iter')),params=paste(variable,name,sep=''))[,c('params','value','iter')]
