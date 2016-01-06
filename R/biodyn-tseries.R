@@ -27,11 +27,20 @@ tseriesFn1=function(object){
 
 tseriesFn2=function(object,brp,proxy='msy'){
   
-  res=FLQuants(stock  =stock(object)%/%FLBRP::refpts(brp)[proxy,'biomass'],
-               ssb    =ssb(  object)%/%FLBRP::refpts(brp)[proxy,'ssb'],
-               rec    =rec(  object)%/%FLBRP::refpts(brp)[proxy,'rec'],
-               catch  =catch(object)%/%FLBRP::refpts(brp)[proxy,'yield'],
-               fbar   =fbar( object)%/%FLBRP::refpts(brp)[proxy,'harvest'],
+  res=FLQuants(stock  =stock(object)%/%FLBRP::refpts(brp)[proxy,   'biomass'],
+               ssb    =ssb(  object)%/%FLBRP::refpts(brp)[proxy,   'ssb'],
+               rec    =rec(  object)%/%FLBRP::refpts(brp)[proxy,   'rec'],
+               stockV =stock(object)%/%FLBRP::refpts(brp)["virgin",'biomass'],
+               ssbV   =ssb(  object)%/%FLBRP::refpts(brp)["virgin",'ssb'],
+               recV   =rec(  object)%/%FLBRP::refpts(brp)["virgin",'rec'],
+               catch  =catch(object)%/%FLBRP::refpts(brp)[proxy,   'yield'],
+               ageS   =apply(stock.n(object)*mat(object)*ages(stock.n(object)),c(2,6),sum)%/%
+                              apply(stock.n(object)*mat(object),c(2,6),sum),
+               ageB   =apply(stock.n(object)*ages(stock.n(object)),c(2,6),sum)%/%
+                              apply(stock.n(object),c(2,6),sum),
+               ageC   =apply(catch.n(object)*ages(catch.n(object)),c(2,6),sum)%/%
+                              apply(catch.n(object),c(2,6),sum),
+               fbar   =fbar( object)%/%FLBRP::refpts(brp)[proxy,   'harvest'],
                harvest=(catch(object)/stock(object))%/%(FLBRP::refpts(brp)[proxy,'yield']/FLBRP::refpts(brp)[proxy,'biomass']))
   
   model.frame(res,drop=T)}

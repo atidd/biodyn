@@ -334,7 +334,7 @@ priorFn=function(...){
   
   args=list(...)
 
-  res=biodyn::biodyn()@priors
+  res=biodyn:::biodyn()@priors
   nms=dimnames(res)$params[dimnames(res)$params %in% names(args)]
   nms=nms[nms %in% dimnames(res)$params]
   

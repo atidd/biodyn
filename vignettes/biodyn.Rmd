@@ -26,7 +26,7 @@ library(knitr)
 options(max.print="75")
 opts_chunk$set(fig.path="out/",
                echo =TRUE,
-               cache=!TRUE,
+               cache=TRUE,
                cache.path="cache/",
                prompt=FALSE,
                tidy=FALSE,
@@ -201,6 +201,8 @@ cpue=rlnorm(1,log(cpue),.2)
 ggplot(as.data.frame(cpue))+
   geom_point(aes(year,data))+
   geom_line(aes(year,data),data=as.data.frame(stock(bd)),col="salmon")
+
+save(cpue,file="/home/laurie/Desktop/flr/git/biodyn/data/cpue.RData")
 ```
 
 Starting values for parameters are also required. These can be set by informed guesses. If you know the catch then MSY should be somewhere close and if you can provide a guess for r (the default is 0.5) then carrying capacity (k) can be calculated; by default is assummed to be symetric (i.e. p=1) and $B_0$ (the ratio of the initial biomass to carrying capacity) can be set to 1 if data are available from the start of the fishery. The robustness of fixing any parameters should be checked.
@@ -232,6 +234,7 @@ bdHat=fit(bd,cpue)
 
 # plot(biodyns("True"=bd,"Hat"=bdHat))+
 #   theme(legend.position="bottom")
+save(bdHat,file="/home/laurie/Desktop/flr/git/biodyn/data/bdHat.RData")
 ```
 
 Since the true parameters are known then we can check the fits. 
@@ -449,7 +452,7 @@ sims[["CPUE"]]=fit(propagate(bdHat,100),cpueSim)
 The Jack knife is a relatively quick procedure and so suitable for simulation testing
 ```{r uncertaintyJackknife,fig.height=4,fig.margin=TRUE, fig.cap="Plot predicted stock trend by index"}
 
-bdJK =fit(bdHat,jackknife(cpue))
+bdJK =fit(bdHat,FLQuant(jackknife(cpue)))
 
 sims[["Jack Knife"]]=bdJK
 
