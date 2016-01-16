@@ -49,8 +49,7 @@ mseBiodyn<-function(om,eql,srDev,
                     cmdOps=paste('-maxfn 500 -iprint 0 -est'),
                     omega =1,
                     refB  =1,
-                    trendQ=1+FLQuant(cumprod(rep(0,end-dims(trendQ)$minyear+1)),
-                                   dimnames=list(year=dims(trendQ)$minyear:end))){
+                    qTrend=0){
  
   ## Get number of iterations in OM
   nits=c(om=dims(om)$iter, eql=dims(params(eql))$iter, rsdl=dims(srDev)$iter)
@@ -64,9 +63,12 @@ mseBiodyn<-function(om,eql,srDev,
   mou=om
    
   #### Observation Error (OEM) setup #######################
-  ## Random variation for CPUE  
+  ## Random variation for CPUE
   cpue=oem(window(om,end=start),cv=uDev,fishDepend=TRUE)
-  cpue=cpue*trendQ[,dimnames(cpue)$year]
+  if (!("FLQuant"%in%is(qTrend)))
+    qTrend=FLQuant(cumprod(rep(1+qTrend,(end+interval-as.numeric(dims(cpue)["minyear"])+1))),
+                   dimnames=list(year=range(om)["minyear"]:(end+interval)))
+  cpue=cpue*qTrend[,dimnames(cpue)$year]
   
   ## Loop round years
   mp =NULL
@@ -78,7 +80,7 @@ mseBiodyn<-function(om,eql,srDev,
     ## use data from last year
     cpue=window(cpue,end=iYr-1)
     cpue[,ac(iYr-(interval:1))]=oem(om[,ac(iYr-(interval:1))],uDev,fishDepend=TRUE)
-    cpue[,ac(iYr-(interval:1))]=cpue[,ac(iYr-(interval:1))]*trendQ[,ac(iYr-(interval:1))]
+    cpue[,ac(iYr-(interval:1))]=cpue[,ac(iYr-(interval:1))]*qTrend[,ac(iYr-(interval:1))]
     
     #### Management Procedure
     ## Set up assessment parameter options
