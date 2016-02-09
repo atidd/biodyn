@@ -1,11 +1,11 @@
 xvalFn=function(object,index,minyear,maxyear=range(object)["maxyear"]){
-  
+
   u =window(index,   end=minyear)
   bd=window(object,  end=minyear)
   bd=fit(bd,u)
   bd=fwd(bd,catch=catch(object)[,ac((minyear+1):maxyear)])
   
-  nU     =(dim(params(bd))[1]-4)/2
+  nU     =(dim(params(object))[1]-4)/2
   biomass=(stock(bd)[,-dim(stock(bd))[2]]+stock(bd)[,-1])/2
   
   if (!("FLQuants"%in%is(index))) index=FLQuants(index)
@@ -15,6 +15,7 @@ xvalFn=function(object,index,minyear,maxyear=range(object)["maxyear"]){
       hat=biomass%*%params(bd)[4+i],
       obs=index[[i]])),drop=T))
   
+  res=subset(res,year>=minyear)
   names(res)[1]="index"
   
   res}

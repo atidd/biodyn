@@ -37,7 +37,8 @@ runMSE=function(om,eql,mp,
                 ftar=0.75,fmin=0.01,blim=0.8,btrig=0.4,
                 what="msy",
                 mult=TRUE,
-                range=c(range(om)["maxyear"],c(range(om)["maxyear"])+30,interval=3)){
+                range=c(range(om)["maxyear"],
+                        range(om)["maxyear"]+30,interval=3)){
   
   names(range)=c("min","max","interval")
   

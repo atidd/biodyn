@@ -313,35 +313,3 @@ controlFn=function(r,       k,       p=1,      b0=1,
   
   res}  
   
-#' priorFn
-#' @description A utility function to help set up the \code{prior} slot in \code{biodyn}.
-#'            
-#' @param ... any one of  \code{r,k,p,b0,msy,bmsy,fmsy}
-#' 
-#' #' @return \code{list} with om, ...
-#'  
-#' @export
-
-#' @rdname priorFn
-#' 
-#' @seealso \code{\link{biodyn}}
-#' 
-#' @examples
-#' \dontrun{
-#'    priorFn(r=c(weight=1,0.3,0.03)
-#'    }
-priorFn=function(...){
-  
-  args=list(...)
-
-  res=biodyn:::biodyn()@priors
-  nms=dimnames(res)$params[dimnames(res)$params %in% names(args)]
-  nms=nms[nms %in% dimnames(res)$params]
-  
-  for (i in nms){
-    if ('a'      %in% names(args[[i]])) res[i,'a'][]     =unlist(c(args[[i]]['a']))
-    if ('b'      %in% names(args[[i]])) res[i,'b'][]     =unlist(c(args[[i]]['b']))
-    if ('weight' %in% names(args[[i]])) res[i,'weight'][]=unlist(c(args[[i]]['weight']))}
-  
-  res}  
-
